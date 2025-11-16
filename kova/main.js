@@ -1,13 +1,12 @@
-window.OPENAI_API_KEY = localStorage.getItem("kova_api");
+
 async function sendToOpenAI(message) {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${window.OPENAI_API_KEY}`,
-        },
+           "Authorization": `Bearer ${localStorage.getItem("kova_api")}`,
         body: JSON.stringify({
-            model: "gpt-4.1-mini",
+            model: "gpt-40-mini",
             messages: [{
                 role: "system",
                 content: "You are Kova, a fashionable AI assistant."
