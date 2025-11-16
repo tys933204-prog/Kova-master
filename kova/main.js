@@ -1,3 +1,4 @@
+window.OPENAI_API_KEY = "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";
 async function sendToOpenAI(message) {
   const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
