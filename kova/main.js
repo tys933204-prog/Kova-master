@@ -12,7 +12,7 @@ async function sendToOpenAI(message) {
       "Authorization": `Bearer ${window.OPENAI_API_KEY}`,
     },
     body: JSON.stringify({
-      model: "gpt-4o-mini",
+      model: "gpt-4.1-mini",
       messages: [
         { role: "system", content: "You are Kova, a fashionable AI assistant." },
         { role: "user", content: message }
