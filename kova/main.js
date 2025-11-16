@@ -20,10 +20,16 @@ async function sendToOpenAI(message) {
     const data = await response.json();
     return data.choices?.[0]?.message?.content || "Something went wrong.";
 }
-const chatBox = document.getElementById("chat-box");
-const inputField = document.getElementById("user-input");
-const sendBtn = document.getElementById("send-btn");
+const chatBox = document.getElementById("messages");
+const inputField = document.getElementById("userInput");
+const sendBtn = document.getElementById("sendBtn");
+// This is just a sample script. Paste your real code (javascript or HTML) here.
 
+if ('this_is' == /an_example/) {
+    of_beautifier();
+} else {
+    var a = b ? (c % d) : e[f];
+}
 function addMessage(text, sender) {
     const message = document.createElement("div");
     message.classList.add("message", sender);
