@@ -6,7 +6,7 @@ async function sendToOpenAI(message) {
             "Content-Type": "application/json",
            "Authorization": `Bearer ${localStorage.getItem("kova_api")}`,
         body: JSON.stringify({
-            model: "gpt-40-mini",
+            model: "gpt-4.1-mini",
             messages: [{
                 role: "system",
                 content: "You are Kova, a fashionable AI assistant."
@@ -22,13 +22,6 @@ async function sendToOpenAI(message) {
 const chatBox = document.getElementById("messages");
 const inputField = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
-// This is just a sample script. Paste your real code (javascript or HTML) here.
-
-if ('this_is' == /an_example/) {
-    of_beautifier();
-} else {
-    var a = b ? (c % d) : e[f];
-}
 function addMessage(text, sender) {
     const message = document.createElement("div");
     message.classList.add("message", sender);
@@ -52,11 +45,3 @@ inputField.addEventListener("keypress", (event) => {
         sendBtn.click();
     }
 });
-
-// This is just a sample script. Paste your real code (javascript or HTML) here.
-
-if ('this_is' == /an_example/) {
-    of_beautifier();
-} else {
-    var a = b ? (c % d) : e[f];
-}
