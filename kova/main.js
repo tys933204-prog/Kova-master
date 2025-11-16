@@ -1,4 +1,4 @@
-
+window.OPENAI_API_KEY = localStorage.getItem("kova_api");
 async function sendToOpenAI(message) {
  const response = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
