@@ -61,7 +61,15 @@
       <input id="userInput" type="text" placeholder="Type your message...">
       <button id="sendBtn">Send</button>
   </div>
-
+<script>
+if (!localStorage.getItem("kova_api")) {
+    const key = prompt("Enter your OpenAI API key to activate Kova:");
+    if (key) {
+        localStorage.setItem("kova_api", key);
+        alert("Key saved! Refresh the page.");
+    }
+}
+</script>
   <script src="kova/main.js"></script>
 
 </body>
