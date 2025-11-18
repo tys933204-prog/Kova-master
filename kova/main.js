@@ -60,7 +60,11 @@ sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
 
     async function kovaReply(userMessage) {
     loading.style.display = "block";      // Show loading
-    const reply = await sendToOpenAI(userMessage);
+    const personalizedMessage = userPreferences.lastStyle 
+    ? `Last style mentioned: ${userPreferences.lastStyle}. Current message: ${userMessage}` 
+    : userMessage;
+
+const reply = await sendToOpenAI(personalizedMessage);
     loading.style.display = "none";       // Hide loading
     addMessage(reply, "kova");
         // Example: store last style mentioned
