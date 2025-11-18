@@ -17,6 +17,8 @@ document.addEventListener("DOMContentLoaded", () => {
         message.style.margin = "8px 0";
         message.textContent = text;
         chatBox.appendChild(message);
+        chatHistory.push({ sender, text });
+sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
