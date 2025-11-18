@@ -63,6 +63,11 @@ sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
     const reply = await sendToOpenAI(userMessage);
     loading.style.display = "none";       // Hide loading
     addMessage(reply, "kova");
+        // Example: store last style mentioned
+if (userMessage.toLowerCase().includes("style")) {
+    userPreferences.lastStyle = userMessage;
+    localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
+}
 }
 
     sendBtn.addEventListener("click", () => {
