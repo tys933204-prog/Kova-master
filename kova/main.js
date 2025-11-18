@@ -2,16 +2,15 @@
 const kovaApiKey = localStorage.getItem("kova_api");
 if (!kovaApiKey) {
     const key = prompt("Enter your OpenAI API key to activate Kova:");
-    if (key) {
-        localStorage.setItem("kova_api", key);
-        alert("Key saved! Refresh the page.");
-    }
+    if (key) localStorage.setItem("kova_api", key);
 }
 
-// Load chat history
+// Load chat history and preferences
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
+let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {};
+if (!userPreferences.favoriteBrands) userPreferences.favoriteBrands = [];
 
-// Wait until DOM is ready
+// Wait for DOM
 document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.getElementById("startChat");
     const chatContainer = document.getElementById("chatContainer");
@@ -19,18 +18,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputField = document.getElementById("userInput");
     const chatBox = document.getElementById("messages");
     const loading = document.getElementById("loading");
-    const usernameInput = document.getElementById("usernameInput");
-
-    // Load username from session
-    let username = sessionStorage.getItem("kova_username") || "";
-    if (usernameInput) usernameInput.value = username;
-
-    if (usernameInput) {
-        usernameInput.addEventListener("change", () => {
-            username = usernameInput.value.trim();
-            sessionStorage.setItem("kova_username", username);
-        });
-    }
 
     // Start chat button
     startBtn.addEventListener("click", () => {
@@ -38,15 +25,10 @@ document.addEventListener("DOMContentLoaded", () => {
         startBtn.style.display = "none";
     });
 
-    // Load user preferences
-    let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {};
-    if (!userPreferences.favoriteBrands) userPreferences.favoriteBrands = [];
-
-    // Function to add message
+    // Add message function
     function addMessage(text, sender) {
         const message = document.createElement("div");
         message.classList.add("message", sender);
-        message.style.margin = "8px 0";
         message.textContent = text;
         chatBox.appendChild(message);
 
@@ -55,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Send message to OpenAI
+    // OpenAI API call
     async function sendToOpenAI(message) {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
@@ -76,27 +58,28 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Reply from Kova
+    // Kova reply with typing
     async function kovaReply(userMessage) {
-        loading.style.display = "block"; // Show loading
-
-        const personalizedMessage = userPreferences.lastStyle 
-            ? `Last style mentioned: ${userPreferences.lastStyle}. Current message: ${userMessage}` 
+        loading.style.display = "block";
+        const personalizedMessage = userPreferences.lastStyle
+            ? `Last style mentioned: ${userPreferences.lastStyle}. Current message: ${userMessage}`
             : userMessage;
 
-        const reply = await sendToOpenAI(personalizedMessage);
+        // Simulate typing delay
+        await new Promise(r => setTimeout(r, 1500));
 
-        loading.style.display = "none"; // Hide loading
+        const reply = await sendToOpenAI(personalizedMessage);
+        loading.style.display = "none";
         addMessage(reply, "kova");
 
-        // Store last style mentioned
+        // Save last style
         if (userMessage.toLowerCase().includes("style")) {
             userPreferences.lastStyle = userMessage;
             localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
         }
     }
 
-    // Send button click
+    // Send button
     sendBtn.addEventListener("click", () => {
         const message = inputField.value.trim();
         if (!message) return;
@@ -105,11 +88,11 @@ document.addEventListener("DOMContentLoaded", () => {
         kovaReply(message);
     });
 
-    // Enter key triggers send
+    // Enter key
     inputField.addEventListener("keypress", (event) => {
         if (event.key === "Enter") sendBtn.click();
     });
 
-    // Load saved chat messages
+    // Load chat history
     chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
 });
