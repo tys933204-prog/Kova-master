@@ -43,7 +43,9 @@ sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
     }
 
     // Send message to OpenAI
-async function sendToOpenAI(message) {
+async function sendToOpenAI(userMessage) {
+    const personalizedMessage = username ? `${username}: ${userMessage}` : userMessage;
+
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -54,7 +56,7 @@ async function sendToOpenAI(message) {
             model: "gpt-4.1-mini",
             messages: [
                 { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
-                { role: "user", content: message }
+                { role: "user", content: personalizedMessage }
             ]
         })
     });
@@ -100,4 +102,4 @@ inputField.addEventListener("keypress", (event) => {
 });
 
 // Load saved chat messages on page load
-chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
+chatHistory.forEach(msg => addMessage(msg.text, msg.sender)); 
