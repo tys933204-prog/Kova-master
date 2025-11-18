@@ -39,9 +39,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     async function kovaReply(userMessage) {
-        const reply = await sendToOpenAI(userMessage);
-        addMessage(reply, "kova");
-    }
+    loading.style.display = "block";      // Show loading
+    const reply = await sendToOpenAI(userMessage);
+    loading.style.display = "none";       // Hide loading
+    addMessage(reply, "kova");
+}
 
     sendBtn.addEventListener("click", () => {
         const message = inputField.value.trim();
