@@ -65,3 +65,9 @@ body {
     border-radius: 10px;
     cursor: pointer;
 }
+#messages {
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
