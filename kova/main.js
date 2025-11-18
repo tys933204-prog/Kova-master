@@ -45,8 +45,7 @@ sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
     // Send message to OpenAI
 async function sendToOpenAI(userMessage) {
     const personalizedMessage = username ? `${username}: ${userMessage}` : userMessage;
-
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
