@@ -62,3 +62,5 @@ sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
         }
     });
 });
+// Load saved chat messages on page load
+chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
