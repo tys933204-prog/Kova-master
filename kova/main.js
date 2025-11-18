@@ -27,6 +27,9 @@ usernameInput.addEventListener("change", () => {
         startBtn.style.display = "none";
     });
     let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {};
+    if (!userPreferences.favoriteBrands) {
+    userPreferences.favoriteBrands = [];
+}
 
     function addMessage(text, sender) {
         const message = document.createElement("div");
