@@ -3,8 +3,9 @@ async function sendToOpenAI(message) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-           "Authorization": `Bearer ${localStorage.getItem("kova_api")}`,
-        },body: JSON.stringify({
+            "Authorization": `Bearer ${localStorage.getItem("kova_api")}`,
+        },
+        body: JSON.stringify({
             model: "gpt-4.1-mini",
             messages: [{
                 role: "system",
@@ -21,6 +22,7 @@ async function sendToOpenAI(message) {
 const chatBox = document.getElementById("messages");
 const inputField = document.getElementById("userInput");
 const sendBtn = document.getElementById("sendBtn");
+
 function addMessage(text, sender) {
     const message = document.createElement("div");
     message.classList.add("message", sender);
