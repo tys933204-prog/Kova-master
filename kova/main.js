@@ -1,3 +1,4 @@
+let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.getElementById("startChat");
     const chatContainer = document.getElementById("chatContainer");
