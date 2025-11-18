@@ -14,6 +14,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputField = document.getElementById("userInput");
     const chatBox = document.getElementById("messages");
     const loading = document.getElementById("loading");
+    const usernameInput = document.getElementById("usernameInput");
+let username = sessionStorage.getItem("kova_username") || "";
+usernameInput.value = username;
+
+usernameInput.addEventListener("change", () => {
+    username = usernameInput.value.trim();
+    sessionStorage.setItem("kova_username", username);
+});
     startBtn.addEventListener("click", () => {
         chatContainer.style.display = "block";
         startBtn.style.display = "none";
