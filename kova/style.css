@@ -71,3 +71,23 @@ body {
     flex-direction: column;
     gap: 5px;
 }
+/* Chat bubbles */
+.message.user {
+    background-color: #1a1a1a;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 15px 15px 0 15px;
+    margin: 5px 0;
+    max-width: 80%;
+    align-self: flex-end;
+}
+
+.message.kova {
+    background-color: #2e86de;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 15px 15px 15px 0;
+    margin: 5px 0;
+    max-width: 80%;
+    align-self: flex-start;
+}
