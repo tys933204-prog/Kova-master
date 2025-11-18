@@ -70,6 +70,10 @@ body {
     display: flex;
     flex-direction: column;
     gap: 5px;
+    min-height: 150px;
+    max-height: 300px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
 }
 /* Chat bubbles */
 .message.user {
