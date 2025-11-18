@@ -26,6 +26,7 @@ usernameInput.addEventListener("change", () => {
         chatContainer.style.display = "block";
         startBtn.style.display = "none";
     });
+    let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {};
 
     function addMessage(text, sender) {
         const message = document.createElement("div");
