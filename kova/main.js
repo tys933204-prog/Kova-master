@@ -42,54 +42,62 @@ sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    async function sendToOpenAI(message) {
-        const reply = await sendToOpenAI(`${username ? username + ': ' : ''}${userMessage}`);
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${localStorage.getItem("kova_api")}`
-            },
-            body: JSON.stringify({
-                model: "gpt-4.1-mini",
-                messages: [
-                    { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
-                    { role: "user", content: message }
-                ]
-            })
-        });
-        const data = await response.json();
-        return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
-    }
+    // Send message to OpenAI
+async function sendToOpenAI(message) {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("kova_api")}`
+        },
+        body: JSON.stringify({
+            model: "gpt-4.1-mini",
+            messages: [
+                { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
+                { role: "user", content: message }
+            ]
+        })
+    });
 
-    async function kovaReply(userMessage) {
-    loading.style.display = "block";      // Show loading
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
+}
+
+// Reply from Kova
+async function kovaReply(userMessage) {
+    loading.style.display = "block"; // Show loading
+
     const personalizedMessage = userPreferences.lastStyle 
-    ? `Last style mentioned: ${userPreferences.lastStyle}. Current message: ${userMessage}` 
-    : userMessage;
+        ? `Last style mentioned: ${userPreferences.lastStyle}. Current message: ${userMessage}` 
+        : userMessage;
 
-const reply = await sendToOpenAI(personalizedMessage);
-    loading.style.display = "none";       // Hide loading
+    const reply = await sendToOpenAI(personalizedMessage);
+
+    loading.style.display = "none"; // Hide loading
     addMessage(reply, "kova");
-        // Example: store last style mentioned
-if (userMessage.toLowerCase().includes("style")) {
-    userPreferences.lastStyle = userMessage;
-    localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
-}
+
+    // Store last style mentioned
+    if (userMessage.toLowerCase().includes("style")) {
+        userPreferences.lastStyle = userMessage;
+        localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
+    }
 }
 
-    sendBtn.addEventListener("click", () => {
-        const message = inputField.value.trim();
-        if (!message) return;
-        addMessage(message, "user");
-        inputField.value = "";
-        kovaReply(message);
-    });
-
-    inputField.addEventListener("keypress", (event) => {
-        if (event.key === "Enter") {
-            sendBtn.click();
-        }
-    });
+// Send button
+sendBtn.addEventListener("click", () => {
+    const message = inputField.value.trim();
+    if (!message) return;
+    addMessage(message, "user");
+    inputField.value = "";
+    kovaReply(message);
 });
+
+// Enter key triggers send
+inputField.addEventListener("keypress", (event) => {
+    if (event.key === "Enter") {
+        sendBtn.click();
+    }
+});
+
 // Load saved chat messages on page load
 chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
