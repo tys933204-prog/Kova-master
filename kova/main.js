@@ -3,7 +3,7 @@ async function sendToOpenAI(message) {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("kova_api")}`,
+            "Authorization": `Bearer ${localStorage.getItem("kova_api")}`
         },
         body: JSON.stringify({
             model: "gpt-4.1-mini",
