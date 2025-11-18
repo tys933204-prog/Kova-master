@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const sendBtn = document.getElementById("sendBtn");
     const inputField = document.getElementById("userInput");
     const chatBox = document.getElementById("messages");
-
+    const loading = document.getElementById("loading");
     startBtn.addEventListener("click", () => {
         chatContainer.style.display = "block";
         startBtn.style.display = "none";
