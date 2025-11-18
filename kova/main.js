@@ -9,7 +9,7 @@ async function sendToOpenAI(message) {
             model: "gpt-4.1-mini",
             messages: [{
                 role: "system",
-                content: "You are Kova, a fashionable AI assistant."
+                content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth."
             }, {
                 role: "user",
                 content: message
@@ -17,7 +17,7 @@ async function sendToOpenAI(message) {
         })
     });
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || "Something went wrong.";
+    return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
 }
 const chatBox = document.getElementById("messages");
 const inputField = document.getElementById("userInput");
@@ -26,6 +26,7 @@ const sendBtn = document.getElementById("sendBtn");
 function addMessage(text, sender) {
     const message = document.createElement("div");
     message.classList.add("message", sender);
+    message.style.margin = "8px 0";
     message.textContent = text;
     chatBox.appendChild(message);
     chatBox.scrollTop = chatBox.scrollHeight;
