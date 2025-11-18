@@ -46,5 +46,34 @@
     Send
   </button>
 </div>
+  <!-- Load main JavaScript -->
+
+<
+script src = "main.js" > < /script>
+
+
+
+    <
+    !--API key popup -->
+
+    <
+    script >
+
+    if (!localStorage.getItem("kova_api")) {
+
+        const key = prompt("Enter your API key:");
+
+        if (key) {
+
+            localStorage.setItem("kova_api", key);
+
+            alert("Key saved — refresh the page.");
+
+        }
+
+    }
+
+    <
+    /script>
 </body>
 </html>
