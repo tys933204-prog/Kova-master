@@ -1,3 +1,11 @@
+const kovaApiKey = localStorage.getItem("kova_api");
+if (!kovaApiKey) {
+    const key = prompt("Enter your OpenAI API key to activate Kova:");
+    if (key) {
+        localStorage.setItem("kova_api", key);
+        alert("Key saved! Refresh the page.");
+    }
+}
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.getElementById("startChat");
