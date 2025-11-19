@@ -7,7 +7,6 @@ if (!kovaApiKey) {
 
 // Load chat history and preferences
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
-// Phase 2A: initialize user preferences
 let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     favoriteStyles: [],
     favoriteBrands: [],
@@ -15,6 +14,9 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     favoriteColors: [],
     previousContext: []
 };
+
+// This array will track the full session conversation for memory
+let sessionConversation = [...chatHistory];
 
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", () => {
@@ -38,13 +40,24 @@ document.addEventListener("DOMContentLoaded", () => {
         message.textContent = text;
         chatBox.appendChild(message);
 
+        // Update chat history and session memory
         chatHistory.push({ sender, text });
+        sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     // OpenAI API call
-    async function sendToOpenAI(message) {
+    async function sendToOpenAI(messagesArray) {
+        // Convert the sessionConversation array to the format the API expects
+        const apiMessages = [
+            { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
+            ...messagesArray.map(m => ({
+                role: m.sender === "user" ? "user" : "assistant",
+                content: m.text
+            }))
+        ];
+
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -53,10 +66,7 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body: JSON.stringify({
                 model: "gpt-4.1-mini",
-                messages: [
-                    { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
-                    { role: "user", content: message }
-                ]
+                messages: apiMessages
             })
         });
 
@@ -64,31 +74,26 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with session memory
+    // Kova reply with full session memory
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // Add user message to preferences context immediately
+        // Add user message to memory
+        sessionConversation.push({ sender: "user", text: userMessage });
         userPreferences.previousContext.push(userMessage);
 
-        // Build personalized prompt for Kova including saved preferences
-        let contextMessage = `Preferences: 
-Styles: ${userPreferences.favoriteStyles.join(", ") || "none"}, 
-Brands: ${userPreferences.favoriteBrands.join(", ") || "none"}, 
-Budget: ${userPreferences.budget || "none"}, 
-Colors: ${userPreferences.favoriteColors.join(", ") || "none"}.
-Conversation so far: ${userPreferences.previousContext.join(" | ")}`;
+        // Call OpenAI with full conversation
+        const reply = await sendToOpenAI(sessionConversation);
 
-        const replyMessage = `User says: ${userMessage}\n${contextMessage}`;
-
-        // Simulate typing delay
-        await new Promise(r => setTimeout(r, 1500));
-
-        const reply = await sendToOpenAI(replyMessage);
+        // Add Kova's reply to chat
         loading.style.display = "none";
         addMessage(reply, "kova");
 
-        // Optional: update preferences from userMessage keywords
+        // Also store Kova's reply in session memory and preferences context
+        sessionConversation.push({ sender: "kova", text: reply });
+        userPreferences.previousContext.push(reply);
+
+        // Optional: parse userMessage for quick preference updates
         const msgLower = userMessage.toLowerCase();
         if (msgLower.includes("style:")) {
             const style = msgLower.split("style:")[1].trim();
@@ -125,6 +130,6 @@ Conversation so far: ${userPreferences.previousContext.join(" | ")}`;
         if (event.key === "Enter") sendBtn.click();
     });
 
-    // Load chat history
+    // Load saved chat history
     chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
 });
