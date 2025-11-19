@@ -88,7 +88,11 @@ if (usernameInput) {
         // Simulate typing delay
         await new Promise(r => setTimeout(r, 1500));
 
-        const reply = await sendToOpenAI(personalizedMessage);
+        const messageForKova = username 
+    ? `${username}: ${personalizedMessage}` 
+    : personalizedMessage;
+
+const reply = await sendToOpenAI(messageForKova);
         loading.style.display = "none";
         addMessage(reply, "kova");
 
