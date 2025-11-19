@@ -16,7 +16,7 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     previousContext: []
 };
 
-// Session memory
+// This array will track the full session conversation for memory
 let sessionConversation = [...chatHistory];
 
 // Wait for DOM
@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
         message.textContent = text;
         chatBox.appendChild(message);
 
+        // Update chat history and session memory
         chatHistory.push({ sender, text });
         sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
@@ -73,32 +74,30 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with occasional name usage
+    // Kova reply with session memory and rare name usage
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // Add user message to session memory
+        // Add user message to memory
         sessionConversation.push({ sender: "user", text: userMessage });
         userPreferences.previousContext.push(userMessage);
 
-        // Compose message with occasional name
-        let personalizedMessage = userMessage;
-        if (userPreferences.name && Math.random() < 0.25) { // 25% chance
-            personalizedMessage = `${userPreferences.name}, ${userMessage}`;
-        }
-
-        // Simulate typing delay
-        await new Promise(r => setTimeout(r, 1500));
-
-        // Get reply from API
+        // Call OpenAI with full conversation
         const reply = await sendToOpenAI(sessionConversation);
 
         loading.style.display = "none";
-        addMessage(reply, "kova");
 
-        // Store Kova's reply in session memory and preferences context
-        sessionConversation.push({ sender: "kova", text: reply });
-        userPreferences.previousContext.push(reply);
+        // Rarely prepend user name (2–3% chance)
+        let finalReply = reply;
+        if (userPreferences.name && Math.random() < 0.03) {
+            finalReply = `${userPreferences.name}, ${reply}`;
+        }
+
+        addMessage(finalReply, "kova");
+
+        // Store Kova's reply in session memory and preferences
+        sessionConversation.push({ sender: "kova", text: finalReply });
+        userPreferences.previousContext.push(finalReply);
 
         // Parse userMessage for quick preference updates
         const msgLower = userMessage.toLowerCase();
