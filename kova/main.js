@@ -9,13 +9,13 @@ if (!kovaApiKey) {
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 // Phase 2A: initialize user preferences
 let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
-    name: "",
     favoriteStyles: [],
     favoriteBrands: [],
     budget: "",
     favoriteColors: [],
     previousContext: []
 };
+
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.getElementById("startChat");
@@ -64,25 +64,51 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with typing
+    // Kova reply with session memory
     async function kovaReply(userMessage) {
         loading.style.display = "block";
-        const personalizedMessage = userPreferences.lastStyle
-            ? `Last style mentioned: ${userPreferences.lastStyle}. Current message: ${userMessage}`
-            : userMessage;
+
+        // Add user message to preferences context immediately
+        userPreferences.previousContext.push(userMessage);
+
+        // Build personalized prompt for Kova including saved preferences
+        let contextMessage = `Preferences: 
+Styles: ${userPreferences.favoriteStyles.join(", ") || "none"}, 
+Brands: ${userPreferences.favoriteBrands.join(", ") || "none"}, 
+Budget: ${userPreferences.budget || "none"}, 
+Colors: ${userPreferences.favoriteColors.join(", ") || "none"}.
+Conversation so far: ${userPreferences.previousContext.join(" | ")}`;
+
+        const replyMessage = `User says: ${userMessage}\n${contextMessage}`;
 
         // Simulate typing delay
         await new Promise(r => setTimeout(r, 1500));
 
-        const reply = await sendToOpenAI(personalizedMessage);
+        const reply = await sendToOpenAI(replyMessage);
         loading.style.display = "none";
         addMessage(reply, "kova");
 
-        // Save last style
-        if (userMessage.toLowerCase().includes("style")) {
-            userPreferences.lastStyle = userMessage;
-            localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
+        // Optional: update preferences from userMessage keywords
+        const msgLower = userMessage.toLowerCase();
+        if (msgLower.includes("style:")) {
+            const style = msgLower.split("style:")[1].trim();
+            if (!userPreferences.favoriteStyles.includes(style)) userPreferences.favoriteStyles.push(style);
         }
+        if (msgLower.includes("brand:")) {
+            const brand = msgLower.split("brand:")[1].trim();
+            if (!userPreferences.favoriteBrands.includes(brand)) userPreferences.favoriteBrands.push(brand);
+        }
+        if (msgLower.includes("color:")) {
+            const color = msgLower.split("color:")[1].trim();
+            if (!userPreferences.favoriteColors.includes(color)) userPreferences.favoriteColors.push(color);
+        }
+        if (msgLower.includes("budget:")) {
+            const budget = msgLower.split("budget:")[1].trim();
+            userPreferences.budget = budget;
+        }
+
+        // Save preferences immediately
+        localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
     }
 
     // Send button
