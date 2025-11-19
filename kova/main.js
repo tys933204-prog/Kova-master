@@ -18,6 +18,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const inputField = document.getElementById("userInput");
     const chatBox = document.getElementById("messages");
     const loading = document.getElementById("loading");
+    const usernameInput = document.getElementById("usernameInput");
+let username = sessionStorage.getItem("kova_username") || "";
+if (usernameInput) usernameInput.value = username;
+
+// Save username on change
+if (usernameInput) {
+    usernameInput.addEventListener("change", () => {
+        username = usernameInput.value.trim();
+        sessionStorage.setItem("kova_username", username);
+    });
+
+    // Save username on Enter key
+    usernameInput.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") {
+            username = usernameInput.value.trim();
+            sessionStorage.setItem("kova_username", username);
+            alert(`Username set to "${username}"`);
+        }
+    });
+}
 
     // Start chat button
     startBtn.addEventListener("click", () => {
