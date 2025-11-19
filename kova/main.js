@@ -8,6 +8,7 @@ if (!kovaApiKey) {
 // Load chat history and preferences
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
+    name: "",
     favoriteStyles: [],
     favoriteBrands: [],
     budget: "",
@@ -40,7 +41,6 @@ document.addEventListener("DOMContentLoaded", () => {
         message.textContent = text;
         chatBox.appendChild(message);
 
-        // Update chat history and session memory
         chatHistory.push({ sender, text });
         sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
@@ -49,7 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // OpenAI API call
     async function sendToOpenAI(messagesArray) {
-        // Convert the sessionConversation array to the format the API expects
         const apiMessages = [
             { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
             ...messagesArray.map(m => ({
@@ -74,7 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with full session memory
+    // Kova reply with memory and occasional name usage
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
@@ -82,18 +81,29 @@ document.addEventListener("DOMContentLoaded", () => {
         sessionConversation.push({ sender: "user", text: userMessage });
         userPreferences.previousContext.push(userMessage);
 
-        // Call OpenAI with full conversation
-        const reply = await sendToOpenAI(sessionConversation);
+        // Determine if Kova should mention the user's name
+        const sayName = userPreferences.name && Math.random() < 0.3; // 30% chance
+        const personalizedMessage = userPreferences.lastStyle
+            ? `Last style mentioned: ${userPreferences.lastStyle}. Current message: ${userMessage}`
+            : userMessage;
+
+        const messageForKova = sayName ? `${userPreferences.name}, ${personalizedMessage}` : personalizedMessage;
+
+        // Simulate typing delay
+        await new Promise(r => setTimeout(r, 1500));
+
+        // Call OpenAI
+        const reply = await sendToOpenAI(sessionConversation.concat([{ sender: "user", text: messageForKova }]));
 
         // Add Kova's reply to chat
         loading.style.display = "none";
         addMessage(reply, "kova");
 
-        // Also store Kova's reply in session memory and preferences context
+        // Store Kova's reply in session memory and preferences
         sessionConversation.push({ sender: "kova", text: reply });
         userPreferences.previousContext.push(reply);
 
-        // Optional: parse userMessage for quick preference updates
+        // Quick preference updates
         const msgLower = userMessage.toLowerCase();
         if (msgLower.includes("style:")) {
             const style = msgLower.split("style:")[1].trim();
