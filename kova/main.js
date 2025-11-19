@@ -8,7 +8,7 @@ if (!kovaApiKey) {
 // Load chat history and preferences
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
-    name: "",
+    name: "",            // optional, stored for future sessions
     favoriteStyles: [],
     favoriteBrands: [],
     budget: "",
@@ -16,7 +16,7 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     previousContext: []
 };
 
-// This array will track the full session conversation for memory
+// Track the full session conversation for memory
 let sessionConversation = [...chatHistory];
 
 // Wait for DOM
@@ -74,7 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with session memory and rare name usage
+    // Kova reply with full session memory
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
@@ -85,21 +85,15 @@ document.addEventListener("DOMContentLoaded", () => {
         // Call OpenAI with full conversation
         const reply = await sendToOpenAI(sessionConversation);
 
+        // Add Kova's reply to chat
         loading.style.display = "none";
+        addMessage(reply, "kova");
 
-        // Rarely prepend user name (2–3% chance)
-        let finalReply = reply;
-        if (userPreferences.name && Math.random() < 0.03) {
-            finalReply = `${userPreferences.name}, ${reply}`;
-        }
+        // Store Kova's reply in session memory and preferences context
+        sessionConversation.push({ sender: "kova", text: reply });
+        userPreferences.previousContext.push(reply);
 
-        addMessage(finalReply, "kova");
-
-        // Store Kova's reply in session memory and preferences
-        sessionConversation.push({ sender: "kova", text: finalReply });
-        userPreferences.previousContext.push(finalReply);
-
-        // Parse userMessage for quick preference updates
+        // Optional: parse userMessage for quick preference updates
         const msgLower = userMessage.toLowerCase();
         if (msgLower.includes("style:")) {
             const style = msgLower.split("style:")[1].trim();
@@ -117,6 +111,10 @@ document.addEventListener("DOMContentLoaded", () => {
             const budget = msgLower.split("budget:")[1].trim();
             userPreferences.budget = budget;
         }
+        if (msgLower.includes("name:")) {
+            const name = msgLower.split("name:")[1].trim();
+            userPreferences.name = name;  // store name for future sessions
+        }
 
         // Save preferences immediately
         localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
@@ -131,7 +129,7 @@ document.addEventListener("DOMContentLoaded", () => {
         kovaReply(message);
     });
 
-    // Enter key triggers send
+    // Enter key
     inputField.addEventListener("keypress", (event) => {
         if (event.key === "Enter") sendBtn.click();
     });
