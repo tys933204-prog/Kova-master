@@ -7,9 +7,15 @@ if (!kovaApiKey) {
 
 // Load chat history and preferences
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
-let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {};
-if (!userPreferences.favoriteBrands) userPreferences.favoriteBrands = [];
-
+// Phase 2A: initialize user preferences
+let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
+    name: "",
+    favoriteStyles: [],
+    favoriteBrands: [],
+    budget: "",
+    favoriteColors: [],
+    previousContext: []
+};
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.getElementById("startChat");
