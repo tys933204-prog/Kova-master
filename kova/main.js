@@ -16,7 +16,7 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     previousContext: []
 };
 
-// This array will track the full session conversation for memory
+// Session memory
 let sessionConversation = [...chatHistory];
 
 // Wait for DOM
@@ -73,37 +73,34 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with memory and occasional name usage
+    // Kova reply with occasional name usage
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // Add user message to memory
+        // Add user message to session memory
         sessionConversation.push({ sender: "user", text: userMessage });
         userPreferences.previousContext.push(userMessage);
 
-        // Determine if Kova should mention the user's name
-        const sayName = userPreferences.name && Math.random() < 0.3; // 30% chance
-        const personalizedMessage = userPreferences.lastStyle
-            ? `Last style mentioned: ${userPreferences.lastStyle}. Current message: ${userMessage}`
-            : userMessage;
-
-        const messageForKova = sayName ? `${userPreferences.name}, ${personalizedMessage}` : personalizedMessage;
+        // Compose message with occasional name
+        let personalizedMessage = userMessage;
+        if (userPreferences.name && Math.random() < 0.25) { // 25% chance
+            personalizedMessage = `${userPreferences.name}, ${userMessage}`;
+        }
 
         // Simulate typing delay
         await new Promise(r => setTimeout(r, 1500));
 
-        // Call OpenAI
-        const reply = await sendToOpenAI(sessionConversation.concat([{ sender: "user", text: messageForKova }]));
+        // Get reply from API
+        const reply = await sendToOpenAI(sessionConversation);
 
-        // Add Kova's reply to chat
         loading.style.display = "none";
         addMessage(reply, "kova");
 
-        // Store Kova's reply in session memory and preferences
+        // Store Kova's reply in session memory and preferences context
         sessionConversation.push({ sender: "kova", text: reply });
         userPreferences.previousContext.push(reply);
 
-        // Quick preference updates
+        // Parse userMessage for quick preference updates
         const msgLower = userMessage.toLowerCase();
         if (msgLower.includes("style:")) {
             const style = msgLower.split("style:")[1].trim();
@@ -135,7 +132,7 @@ document.addEventListener("DOMContentLoaded", () => {
         kovaReply(message);
     });
 
-    // Enter key
+    // Enter key triggers send
     inputField.addEventListener("keypress", (event) => {
         if (event.key === "Enter") sendBtn.click();
     });
