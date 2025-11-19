@@ -15,7 +15,7 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     previousContext: []
 };
 
-// This array will track the full session conversation for memory
+// Track full session conversation
 let sessionConversation = [...chatHistory];
 
 // Wait for DOM
@@ -40,7 +40,6 @@ document.addEventListener("DOMContentLoaded", () => {
         message.textContent = text;
         chatBox.appendChild(message);
 
-        // Update chat history and session memory
         chatHistory.push({ sender, text });
         sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
@@ -49,7 +48,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // OpenAI API call
     async function sendToOpenAI(messagesArray) {
-        // Convert the sessionConversation array to the format the API expects
         const apiMessages = [
             { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
             ...messagesArray.map(m => ({
@@ -74,26 +72,25 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with full session memory
+    // Kova reply with silent memory
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // Add user message to memory
+        // Add user message to session memory and previousContext
         sessionConversation.push({ sender: "user", text: userMessage });
         userPreferences.previousContext.push(userMessage);
 
         // Call OpenAI with full conversation
         const reply = await sendToOpenAI(sessionConversation);
 
-        // Add Kova's reply to chat
         loading.style.display = "none";
         addMessage(reply, "kova");
 
-        // Also store Kova's reply in session memory and preferences context
+        // Store Kova's reply in memory
         sessionConversation.push({ sender: "kova", text: reply });
         userPreferences.previousContext.push(reply);
 
-        // Optional: parse userMessage for quick preference updates
+        // Update preferences silently if user mentions them
         const msgLower = userMessage.toLowerCase();
         if (msgLower.includes("style:")) {
             const style = msgLower.split("style:")[1].trim();
@@ -112,7 +109,7 @@ document.addEventListener("DOMContentLoaded", () => {
             userPreferences.budget = budget;
         }
 
-        // Save preferences immediately
+        // Save preferences silently
         localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
     }
 
