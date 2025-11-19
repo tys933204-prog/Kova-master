@@ -8,7 +8,7 @@ if (!kovaApiKey) {
 // Load chat history and preferences
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
-    name: "",            // optional, stored for future sessions
+    name: "",
     favoriteStyles: [],
     favoriteBrands: [],
     budget: "",
@@ -16,7 +16,7 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     previousContext: []
 };
 
-// Track the full session conversation for memory
+// Track full session conversation for memory
 let sessionConversation = [...chatHistory];
 
 // Wait for DOM
@@ -28,20 +28,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatBox = document.getElementById("messages");
     const loading = document.getElementById("loading");
 
-    // Start chat button
+    // Start chat
     startBtn.addEventListener("click", () => {
         chatContainer.style.display = "block";
         startBtn.style.display = "none";
+
+        // Phase 2A: Ask for missing preferences
+        if (!userPreferences.name) addMessage("Hey! What's your name?", "kova");
+        else if (userPreferences.favoriteStyles.length === 0) addMessage("What styles do you like? (e.g., streetwear, Y2K)", "kova");
+        else if (userPreferences.favoriteBrands.length === 0) addMessage("Any favorite brands?", "kova");
+        else if (!userPreferences.budget) addMessage("What's your budget? (low, medium, high)", "kova");
+        else if (userPreferences.favoriteColors.length === 0) addMessage("What colors do you like?", "kova");
     });
 
-    // Add message function
+    // Add message
     function addMessage(text, sender) {
         const message = document.createElement("div");
         message.classList.add("message", sender);
         message.textContent = text;
         chatBox.appendChild(message);
 
-        // Update chat history and session memory
         chatHistory.push({ sender, text });
         sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
@@ -74,50 +80,40 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with full session memory
+    // Kova reply
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // Add user message to memory
-        sessionConversation.push({ sender: "user", text: userMessage });
-        userPreferences.previousContext.push(userMessage);
-
-        // Call OpenAI with full conversation
-        const reply = await sendToOpenAI(sessionConversation);
-
-        // Add Kova's reply to chat
-        loading.style.display = "none";
-        addMessage(reply, "kova");
-
-        // Store Kova's reply in session memory and preferences context
-        sessionConversation.push({ sender: "kova", text: reply });
-        userPreferences.previousContext.push(reply);
-
-        // Optional: parse userMessage for quick preference updates
+        // Check if user is answering a preference question
         const msgLower = userMessage.toLowerCase();
-        if (msgLower.includes("style:")) {
-            const style = msgLower.split("style:")[1].trim();
-            if (!userPreferences.favoriteStyles.includes(style)) userPreferences.favoriteStyles.push(style);
-        }
-        if (msgLower.includes("brand:")) {
-            const brand = msgLower.split("brand:")[1].trim();
-            if (!userPreferences.favoriteBrands.includes(brand)) userPreferences.favoriteBrands.push(brand);
-        }
-        if (msgLower.includes("color:")) {
-            const color = msgLower.split("color:")[1].trim();
-            if (!userPreferences.favoriteColors.includes(color)) userPreferences.favoriteColors.push(color);
-        }
-        if (msgLower.includes("budget:")) {
-            const budget = msgLower.split("budget:")[1].trim();
-            userPreferences.budget = budget;
-        }
-        if (msgLower.includes("name:")) {
-            const name = msgLower.split("name:")[1].trim();
-            userPreferences.name = name;  // store name for future sessions
+
+        if (!userPreferences.name) {
+            userPreferences.name = userMessage.trim();
+            addMessage(`Got it! I'll remember your name.`, "kova");
+        } else if (userPreferences.favoriteStyles.length === 0) {
+            userPreferences.favoriteStyles = userMessage.split(",").map(s => s.trim());
+            addMessage(`Perfect! I'll remember those styles.`, "kova");
+        } else if (userPreferences.favoriteBrands.length === 0) {
+            userPreferences.favoriteBrands = userMessage.split(",").map(s => s.trim());
+            addMessage(`Great! Favorite brands saved.`, "kova");
+        } else if (!userPreferences.budget) {
+            userPreferences.budget = userMessage.trim();
+            addMessage(`Budget noted!`, "kova");
+        } else if (userPreferences.favoriteColors.length === 0) {
+            userPreferences.favoriteColors = userMessage.split(",").map(c => c.trim());
+            addMessage(`Colors saved!`, "kova");
+        } else {
+            // Normal conversation
+            const reply = await sendToOpenAI([...sessionConversation, { sender: "user", text: userMessage }]);
+            addMessage(reply, "kova");
+            sessionConversation.push({ sender: "kova", text: reply });
+            userPreferences.previousContext.push(reply);
         }
 
-        // Save preferences immediately
+        // Update storage
         localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
+
+        loading.style.display = "none";
     }
 
     // Send button
@@ -134,6 +130,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.key === "Enter") sendBtn.click();
     });
 
-    // Load saved chat history
+    // Load chat history
     chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
 });
