@@ -28,6 +28,9 @@
       margin-bottom:15px;
       overflow-y:auto;
       max-height:200px;
+      display:flex;
+      flex-direction: column;
+      gap:5px;
     }
     input {
       width:100%;
@@ -47,6 +50,23 @@
       border-radius:5px;
       font-size:1.1rem;
     }
+    /* Chat bubbles */
+    .message.user {
+      background-color: #1a1a1a;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 15px 15px 0 15px;
+      align-self: flex-end;
+      max-width: 80%;
+    }
+    .message.kova {
+      background-color: #2e86de;
+      color: white;
+      padding: 10px 15px;
+      border-radius: 15px 15px 15px 0;
+      align-self: flex-start;
+      max-width: 80%;
+    }
   </style>
 </head>
 <body>
@@ -57,12 +77,12 @@
   <p>Your AI fashion assistant is being built.</p>
 
   <div id="chatContainer">
-    <input id="usernameInput" type="text" placeholder="Enter your name..." style="margin-bottom:10px; padding:8px; border-radius:5px; width:100%;">
       <div id="messages">👋 Hey — I’m Kova. Tell me what style, brand, or vibe you want.</div>
-    <div id="loading" style="display:none; color: #ccc; font-style: italic; margin-bottom: 5px;">Kova is typing...</div>
+      <div id="loading" style="display:none; color: #ccc; font-style: italic; margin-bottom: 5px;">Kova is typing...</div>
       <input id="userInput" type="text" placeholder="Type your message...">
       <button id="sendBtn">Send</button>
   </div>
+
 <script>
 if (!localStorage.getItem("kova_api")) {
     const key = prompt("Enter your OpenAI API key to activate Kova:");
@@ -72,7 +92,7 @@ if (!localStorage.getItem("kova_api")) {
     }
 }
 </script>
-  <script src="kova/main.js"></script>
 
+<script src="kova/main.js"></script>
 </body>
 </html>
