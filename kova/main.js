@@ -5,51 +5,51 @@ if (!kovaApiKey) {
     if (key) localStorage.setItem("kova_api", key);
 }
 
-// Hardcoded product list for Kova recommendations
-const productList = [
+// Phase 2: Hardcoded product list
+const products = [
     {
         id: 1,
-        name: "Black Hoodie",
-        imageUrl: "https://via.placeholder.com/100x100.png?text=Black+Hoodie",
-        price: "$50",
-        brand: "Brand A",
-        styleTags: ["streetwear", "hoodie", "black"],
+        name: "Streetwear Hoodie",
+        imageUrl: "https://via.placeholder.com/150",
+        price: "$45",
+        brand: "CoolBrand",
+        styleTags: ["streetwear", "hoodie", "casual"],
         link: "#"
     },
     {
         id: 2,
-        name: "White Sneakers",
-        imageUrl: "https://via.placeholder.com/100x100.png?text=White+Sneakers",
-        price: "$70",
-        brand: "Brand B",
-        styleTags: ["streetwear", "shoes", "white"],
+        name: "Y2K Denim Jacket",
+        imageUrl: "https://via.placeholder.com/150",
+        price: "$60",
+        brand: "RetroVibe",
+        styleTags: ["y2k", "jacket", "casual"],
         link: "#"
     },
     {
         id: 3,
-        name: "Blue Jeans",
-        imageUrl: "https://via.placeholder.com/100x100.png?text=Blue+Jeans",
-        price: "$60",
-        brand: "Brand C",
-        styleTags: ["casual", "jeans", "blue"],
+        name: "Minimalist Sneakers",
+        imageUrl: "https://via.placeholder.com/150",
+        price: "$80",
+        brand: "ShoeCo",
+        styleTags: ["minimal", "shoes", "casual"],
         link: "#"
     },
     {
         id: 4,
-        name: "Red Cap",
-        imageUrl: "https://via.placeholder.com/100x100.png?text=Red+Cap",
-        price: "$25",
-        brand: "Brand D",
-        styleTags: ["streetwear", "cap", "red"],
+        name: "Cozy Sweater",
+        imageUrl: "https://via.placeholder.com/150",
+        price: "$55",
+        brand: "WarmWear",
+        styleTags: ["cozy", "sweater", "casual"],
         link: "#"
     },
     {
         id: 5,
-        name: "Green T-Shirt",
-        imageUrl: "https://via.placeholder.com/100x100.png?text=Green+T-Shirt",
-        price: "$30",
-        brand: "Brand E",
-        styleTags: ["casual", "tshirt", "green"],
+        name: "Business Casual Pants",
+        imageUrl: "https://via.placeholder.com/150",
+        price: "$70",
+        brand: "OfficeFit",
+        styleTags: ["business casual", "pants", "formal"],
         link: "#"
     }
 ];
@@ -89,7 +89,6 @@ document.addEventListener("DOMContentLoaded", () => {
         message.textContent = text;
         chatBox.appendChild(message);
 
-        // Update chat history and session memory
         chatHistory.push({ sender, text });
         sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
@@ -126,18 +125,13 @@ document.addEventListener("DOMContentLoaded", () => {
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // Add user message to memory
         sessionConversation.push({ sender: "user", text: userMessage });
         userPreferences.previousContext.push(userMessage);
 
-        // Call OpenAI with full conversation
         const reply = await sendToOpenAI(sessionConversation);
-
-        // Add Kova's reply to chat
         loading.style.display = "none";
         addMessage(reply, "kova");
 
-        // Also store Kova's reply in session memory and preferences context
         sessionConversation.push({ sender: "kova", text: reply });
         userPreferences.previousContext.push(reply);
 
