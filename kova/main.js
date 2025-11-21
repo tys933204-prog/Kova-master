@@ -5,55 +5,6 @@ if (!kovaApiKey) {
     if (key) localStorage.setItem("kova_api", key);
 }
 
-// Phase 2: Hardcoded product list
-const products = [
-    {
-        id: 1,
-        name: "Streetwear Hoodie",
-        imageUrl: "https://via.placeholder.com/150",
-        price: "$45",
-        brand: "CoolBrand",
-        styleTags: ["streetwear", "hoodie", "casual"],
-        link: "#"
-    },
-    {
-        id: 2,
-        name: "Y2K Denim Jacket",
-        imageUrl: "https://via.placeholder.com/150",
-        price: "$60",
-        brand: "RetroVibe",
-        styleTags: ["y2k", "jacket", "casual"],
-        link: "#"
-    },
-    {
-        id: 3,
-        name: "Minimalist Sneakers",
-        imageUrl: "https://via.placeholder.com/150",
-        price: "$80",
-        brand: "ShoeCo",
-        styleTags: ["minimal", "shoes", "casual"],
-        link: "#"
-    },
-    {
-        id: 4,
-        name: "Cozy Sweater",
-        imageUrl: "https://via.placeholder.com/150",
-        price: "$55",
-        brand: "WarmWear",
-        styleTags: ["cozy", "sweater", "casual"],
-        link: "#"
-    },
-    {
-        id: 5,
-        name: "Business Casual Pants",
-        imageUrl: "https://via.placeholder.com/150",
-        price: "$70",
-        brand: "OfficeFit",
-        styleTags: ["business casual", "pants", "formal"],
-        link: "#"
-    }
-];
-
 // Load chat history and preferences
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
@@ -63,6 +14,15 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     favoriteColors: [],
     previousContext: []
 };
+
+// Hardcoded product list for testing
+const products = [
+    { id: 1, name: "Streetwear Hoodie", imageUrl: "https://via.placeholder.com/60", price: "$50", brand: "Brand A", styleTags: ["streetwear", "hoodie"], link: "#" },
+    { id: 2, name: "Y2K T-Shirt", imageUrl: "https://via.placeholder.com/60", price: "$30", brand: "Brand B", styleTags: ["y2k", "t-shirt"], link: "#" },
+    { id: 3, name: "Cozy Sweater", imageUrl: "https://via.placeholder.com/60", price: "$45", brand: "Brand C", styleTags: ["cozy", "sweater"], link: "#" },
+    { id: 4, name: "Minimal Sneakers", imageUrl: "https://via.placeholder.com/60", price: "$60", brand: "Brand D", styleTags: ["minimal", "shoes"], link: "#" },
+    { id: 5, name: "Business Casual Blazer", imageUrl: "https://via.placeholder.com/60", price: "$80", brand: "Brand E", styleTags: ["business", "blazer"], link: "#" }
+];
 
 // This array will track the full session conversation for memory
 let sessionConversation = [...chatHistory];
@@ -89,6 +49,7 @@ document.addEventListener("DOMContentLoaded", () => {
         message.textContent = text;
         chatBox.appendChild(message);
 
+        // Update chat history and session memory
         chatHistory.push({ sender, text });
         sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
@@ -125,13 +86,18 @@ document.addEventListener("DOMContentLoaded", () => {
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
+        // Add user message to memory
         sessionConversation.push({ sender: "user", text: userMessage });
         userPreferences.previousContext.push(userMessage);
 
+        // Call OpenAI with full conversation
         const reply = await sendToOpenAI(sessionConversation);
+
+        // Add Kova's reply to chat
         loading.style.display = "none";
         addMessage(reply, "kova");
 
+        // Also store Kova's reply in session memory and preferences context
         sessionConversation.push({ sender: "kova", text: reply });
         userPreferences.previousContext.push(reply);
 
