@@ -15,17 +15,40 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     previousContext: []
 };
 
-// Hardcoded product list for testing
+// Hardcoded product list
 const products = [
     { id: 1, name: "Streetwear Hoodie", imageUrl: "https://via.placeholder.com/60", price: "$50", brand: "Brand A", styleTags: ["streetwear", "hoodie"], link: "#" },
     { id: 2, name: "Y2K T-Shirt", imageUrl: "https://via.placeholder.com/60", price: "$30", brand: "Brand B", styleTags: ["y2k", "t-shirt"], link: "#" },
     { id: 3, name: "Cozy Sweater", imageUrl: "https://via.placeholder.com/60", price: "$45", brand: "Brand C", styleTags: ["cozy", "sweater"], link: "#" },
     { id: 4, name: "Minimal Sneakers", imageUrl: "https://via.placeholder.com/60", price: "$60", brand: "Brand D", styleTags: ["minimal", "shoes"], link: "#" },
-    { id: 5, name: "Business Casual Blazer", imageUrl: "https://via.placeholder.com/60", price: "$80", brand: "Brand E", styleTags: ["business", "blazer"], link: "#" }
+    { id: 5, name: "Business Casual Blazer", imageUrl: "https://via.placeholder.com/60", price: "$120", brand: "Brand E", styleTags: ["business casual", "blazer"], link: "#" }
 ];
 
-// This array will track the full session conversation for memory
-let sessionConversation = [...chatHistory];
+// Function to show products based on style
+function showProductsForStyle(style) {
+    const grid = document.getElementById("productGrid");
+    grid.innerHTML = "";
+    const filtered = products.filter(p => p.styleTags.includes(style.toLowerCase()));
+    if (filtered.length === 0) {
+        grid.style.display = "none";
+        return;
+    }
+    grid.style.display = "block";
+    filtered.forEach(p => {
+        const item = document.createElement("div");
+        item.classList.add("product-item");
+        item.innerHTML = `
+            <img src="${p.imageUrl}" alt="${p.name}" />
+            <div class="product-info">
+                <p><strong>${p.name}</strong></p>
+                <p>${p.brand}</p>
+                <p>${p.price}</p>
+            </div>
+            <button onclick="window.open('${p.link}', '_blank')">View / Buy</button>
+        `;
+        grid.appendChild(item);
+    });
+}
 
 // Wait for DOM
 document.addEventListener("DOMContentLoaded", () => {
@@ -48,24 +71,13 @@ document.addEventListener("DOMContentLoaded", () => {
         message.classList.add("message", sender);
         message.textContent = text;
         chatBox.appendChild(message);
-
-        // Update chat history and session memory
         chatHistory.push({ sender, text });
-        sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     // OpenAI API call
-    async function sendToOpenAI(messagesArray) {
-        const apiMessages = [
-            { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
-            ...messagesArray.map(m => ({
-                role: m.sender === "user" ? "user" : "assistant",
-                content: m.text
-            }))
-        ];
-
+    async function sendToOpenAI(message) {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -74,61 +86,38 @@ document.addEventListener("DOMContentLoaded", () => {
             },
             body: JSON.stringify({
                 model: "gpt-4.1-mini",
-                messages: apiMessages
+                messages: [
+                    { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
+                    { role: "user", content: message }
+                ]
             })
         });
-
         const data = await response.json();
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with full session memory
+    // Kova reply
     async function kovaReply(userMessage) {
         loading.style.display = "block";
+        addMessage(userMessage, "user");
 
-        // Add user message to memory
-        sessionConversation.push({ sender: "user", text: userMessage });
-        userPreferences.previousContext.push(userMessage);
+        // Check for style keywords
+        const styleKeywords = ["streetwear","y2k","minimal","cozy","hoodie","t-shirt","shoes","blazer"];
+        styleKeywords.forEach(style => {
+            if (userMessage.toLowerCase().includes(style)) {
+                showProductsForStyle(style);
+            }
+        });
 
-        // Call OpenAI with full conversation
-        const reply = await sendToOpenAI(sessionConversation);
-
-        // Add Kova's reply to chat
+        const reply = await sendToOpenAI(userMessage);
         loading.style.display = "none";
         addMessage(reply, "kova");
-
-        // Also store Kova's reply in session memory and preferences context
-        sessionConversation.push({ sender: "kova", text: reply });
-        userPreferences.previousContext.push(reply);
-
-        // Optional: parse userMessage for quick preference updates
-        const msgLower = userMessage.toLowerCase();
-        if (msgLower.includes("style:")) {
-            const style = msgLower.split("style:")[1].trim();
-            if (!userPreferences.favoriteStyles.includes(style)) userPreferences.favoriteStyles.push(style);
-        }
-        if (msgLower.includes("brand:")) {
-            const brand = msgLower.split("brand:")[1].trim();
-            if (!userPreferences.favoriteBrands.includes(brand)) userPreferences.favoriteBrands.push(brand);
-        }
-        if (msgLower.includes("color:")) {
-            const color = msgLower.split("color:")[1].trim();
-            if (!userPreferences.favoriteColors.includes(color)) userPreferences.favoriteColors.push(color);
-        }
-        if (msgLower.includes("budget:")) {
-            const budget = msgLower.split("budget:")[1].trim();
-            userPreferences.budget = budget;
-        }
-
-        // Save preferences immediately
-        localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
     }
 
     // Send button
     sendBtn.addEventListener("click", () => {
         const message = inputField.value.trim();
         if (!message) return;
-        addMessage(message, "user");
         inputField.value = "";
         kovaReply(message);
     });
@@ -138,6 +127,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (event.key === "Enter") sendBtn.click();
     });
 
-    // Load saved chat history
+    // Load chat history
     chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
 });
