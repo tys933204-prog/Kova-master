@@ -1,150 +1,132 @@
-// ---- Load API Key ----
+// Load API key
 const kovaApiKey = localStorage.getItem("kova_api");
 if (!kovaApiKey) {
     const key = prompt("Enter your OpenAI API key to activate Kova:");
     if (key) localStorage.setItem("kova_api", key);
 }
 
-// ---- Load stored memory ----
+// Load chat history and preferences
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
-
 let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
-    name: "",
     favoriteStyles: [],
     favoriteBrands: [],
     budget: "",
     favoriteColors: [],
-    lastMessage: ""
+    previousContext: []
 };
 
-// ---- Test product list ----
-const products = [
-    { id: 1, name: "Streetwear Hoodie", imageUrl: "https://via.placeholder.com/60", price: "$50", brand: "Brand A", styleTags: ["streetwear", "hoodie"], link: "#" },
-    { id: 2, name: "Y2K T-Shirt", imageUrl: "https://via.placeholder.com/60", price: "$30", brand: "Brand B", styleTags: ["y2k", "t-shirt"], link: "#" },
-    { id: 3, name: "Cozy Sweater", imageUrl: "https://via.placeholder.com/60", price: "$45", brand: "Brand C", styleTags: ["cozy", "sweater"], link: "#" },
-    { id: 4, name: "Minimal Sneakers", imageUrl: "https://via.placeholder.com/60", price: "$60", brand: "Brand D", styleTags: ["minimal", "shoes"], link: "#" },
-    { id: 5, name: "Business Blazer", imageUrl: "https://via.placeholder.com/60", price: "$120", brand: "Brand E", styleTags: ["business", "blazer"], link: "#" }
-];
+// Track full session conversation
+let sessionConversation = [...chatHistory];
 
-// ---- Product display function ----
-function showProducts(style) {
-    const grid = document.getElementById("productGrid");
-    const filtered = products.filter(item => item.styleTags.includes(style.toLowerCase()));
+// Wait for DOM
+document.addEventListener("DOMContentLoaded", () => {
+    const startBtn = document.getElementById("startChat");
+    const chatContainer = document.getElementById("chatContainer");
+    const sendBtn = document.getElementById("sendBtn");
+    const inputField = document.getElementById("userInput");
+    const chatBox = document.getElementById("messages");
+    const loading = document.getElementById("loading");
 
-    grid.innerHTML = "";
-    if (filtered.length === 0) {
-        grid.style.display = "none";
-        return;
+    // Start chat button
+    startBtn.addEventListener("click", () => {
+        chatContainer.style.display = "block";
+        startBtn.style.display = "none";
+    });
+
+    // Add message function
+    function addMessage(text, sender) {
+        const message = document.createElement("div");
+        message.classList.add("message", sender);
+        message.textContent = text;
+        chatBox.appendChild(message);
+
+        chatHistory.push({ sender, text });
+        sessionConversation.push({ sender, text });
+        sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    grid.style.display = "block";
-    filtered.forEach(p => {
-        const item = document.createElement("div");
-        item.classList.add("product-item");
-        item.innerHTML = `
-            <img src="${p.imageUrl}">
-            <div class="product-info">
-                <p><strong>${p.name}</strong></p>
-                <p>${p.brand}</p>
-                <p>${p.price}</p>
-            </div>
-            <button onclick="window.open('${p.link}', '_blank')">View</button>
-        `;
-        grid.appendChild(item);
-    });
-}
+    // OpenAI API call
+    async function sendToOpenAI(messagesArray) {
+        const apiMessages = [
+            { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
+            ...messagesArray.map(m => ({
+                role: m.sender === "user" ? "user" : "assistant",
+                content: m.text
+            }))
+        ];
 
-// ---- Add message UI ----
-function addMessage(text, sender) {
-    const box = document.getElementById("messages");
-    const msg = document.createElement("div");
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("kova_api")}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4.1-mini",
+                messages: apiMessages
+            })
+        });
 
-    msg.classList.add("message", sender);
-    msg.textContent = text;
-    box.appendChild(msg);
+        const data = await response.json();
+        return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
+    }
 
-    chatHistory.push({ sender, text });
-    sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
+    // Kova reply with silent memory
+    async function kovaReply(userMessage) {
+        loading.style.display = "block";
 
-    box.scrollTop = box.scrollHeight;
-}
+        // Add user message to session memory and previousContext
+        sessionConversation.push({ sender: "user", text: userMessage });
+        userPreferences.previousContext.push(userMessage);
 
-// ---- AI request ----
-async function sendToOpenAI(message) {
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("kova_api")}`
-        },
-        body: JSON.stringify({
-            model: "gpt-4.1-mini",
-            messages: [
-                { role: "system", content: `
-                    You are Kova — the confident, stylish AI fashion assistant.
-                    If the user tells you their name, remember it.
-                    Use it rarely, only when natural.
-                    Use saved preferences in future replies.
-                ` },
-                ...chatHistory.map(m => ({
-                    role: m.sender === "user" ? "user" : "assistant",
-                    content: m.text
-                })),
-                { role: "user", content: message }
-            ]
-        })
-    });
+        // Call OpenAI with full conversation
+        const reply = await sendToOpenAI(sessionConversation);
 
-    const data = await response.json();
-    return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
-}
+        loading.style.display = "none";
+        addMessage(reply, "kova");
 
-// ---- Respond + detect style & save memory ----
-async function kovaReply(input) {
-    const loading = document.getElementById("loading");
-    loading.style.display = "block";
+        // Store Kova's reply in memory
+        sessionConversation.push({ sender: "kova", text: reply });
+        userPreferences.previousContext.push(reply);
 
-    addMessage(input, "user");
+        // Update preferences silently if user mentions them
+        const msgLower = userMessage.toLowerCase();
+        if (msgLower.includes("style:")) {
+            const style = msgLower.split("style:")[1].trim();
+            if (!userPreferences.favoriteStyles.includes(style)) userPreferences.favoriteStyles.push(style);
+        }
+        if (msgLower.includes("brand:")) {
+            const brand = msgLower.split("brand:")[1].trim();
+            if (!userPreferences.favoriteBrands.includes(brand)) userPreferences.favoriteBrands.push(brand);
+        }
+        if (msgLower.includes("color:")) {
+            const color = msgLower.split("color:")[1].trim();
+            if (!userPreferences.favoriteColors.includes(color)) userPreferences.favoriteColors.push(color);
+        }
+        if (msgLower.includes("budget:")) {
+            const budget = msgLower.split("budget:")[1].trim();
+            userPreferences.budget = budget;
+        }
 
-    // save last message
-    userPreferences.lastMessage = input;
-
-    // detect name
-    if (input.toLowerCase().startsWith("my name is")) {
-        userPreferences.name = input.replace(/my name is/i, "").trim();
+        // Save preferences silently
         localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
     }
 
-    // detect fashion styles
-    const keywords = ["streetwear","y2k","minimal","cozy","hoodie","shoes","blazer"];
-    const detected = keywords.find(k => input.toLowerCase().includes(k));
-    if (detected) showProducts(detected);
-
-    const reply = await sendToOpenAI(input);
-
-    loading.style.display = "none";
-    addMessage(reply, "kova");
-}
-
-// ---- UI Events ----
-document.addEventListener("DOMContentLoaded", () => {
-
-    document.getElementById("startChat").onclick = () => {
-        document.getElementById("chatContainer").style.display = "block";
-    };
-
-    document.getElementById("sendBtn").onclick = () => {
-        const input = document.getElementById("userInput");
-        if (input.value.trim() !== "") {
-            kovaReply(input.value.trim());
-            input.value = "";
-        }
-    };
-
-    document.getElementById("userInput").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") document.getElementById("sendBtn").click();
+    // Send button
+    sendBtn.addEventListener("click", () => {
+        const message = inputField.value.trim();
+        if (!message) return;
+        addMessage(message, "user");
+        inputField.value = "";
+        kovaReply(message);
     });
 
-    // Reload chat on refresh
+    // Enter key
+    inputField.addEventListener("keypress", (event) => {
+        if (event.key === "Enter") sendBtn.click();
+    });
+
+    // Load saved chat history
     chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
 });
