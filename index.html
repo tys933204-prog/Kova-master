@@ -67,6 +67,44 @@
       align-self: flex-start;
       max-width: 80%;
     }
+    /* Product Grid */
+    #productGrid {
+      display:none;
+      margin: 20px auto;
+      max-width: 400px;
+      background: rgba(255,255,255,0.05);
+      padding: 15px;
+      border-radius: 10px;
+      color: white;
+      text-align: left;
+    }
+    .product-item {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+      align-items: center;
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    .product-item img {
+      width: 60px;
+      height: 60px;
+      object-fit: cover;
+      border-radius: 5px;
+    }
+    .product-info {
+      flex: 1;
+    }
+    .product-info p {
+      margin: 2px 0;
+    }
+    .product-item button {
+      width: auto;
+      padding: 5px 10px;
+      font-size: 0.9rem;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -81,6 +119,11 @@
       <div id="loading" style="display:none; color: #ccc; font-style: italic; margin-bottom: 5px;">Kova is typing...</div>
       <input id="userInput" type="text" placeholder="Type your message...">
       <button id="sendBtn">Send</button>
+  </div>
+
+  <!-- Product grid section for Kova recommendations -->
+  <div id="productGrid">
+      <!-- Products recommended by Kova will appear here -->
   </div>
 
 <script>
