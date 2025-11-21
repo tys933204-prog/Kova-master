@@ -15,6 +15,18 @@ const productCatalog = [
     { name: "Rhinestone Mini Skirt", style: "y2k", img: "https://via.placeholder.com/200", price: "$35" }
 ];
 
+// Detect style keywords and return matching products
+function findMatchingProducts(message) {
+    const msg = message.toLowerCase();
+
+    const styles = ["streetwear", "cozy", "y2k"];
+    const matchedStyle = styles.find(style => msg.includes(style));
+
+    if (!matchedStyle) return [];
+
+    return productCatalog.filter(item => item.style === matchedStyle);
+}
+
 // Load chat history and preferences
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
