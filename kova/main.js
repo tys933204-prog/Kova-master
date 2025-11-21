@@ -68,6 +68,25 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
+    // ⭐ NEW FUNCTION — Display products in product grid
+    function displayProducts(products) {
+        const grid = document.getElementById("productGrid");
+        if (!grid) return;
+
+        grid.innerHTML = ""; // clear old items
+
+        products.forEach(item => {
+            const card = document.createElement("div");
+            card.classList.add("product-card");
+            card.innerHTML = `
+                <img src="${item.img}" alt="${item.name}">
+                <p>${item.name}</p>
+                <p>${item.price}</p>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
     // OpenAI API call
     async function sendToOpenAI(messagesArray) {
         const apiMessages = [
@@ -97,6 +116,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // Kova reply with silent memory
     async function kovaReply(userMessage) {
         loading.style.display = "block";
+
+        // Check if user message includes a style and show matching products
+        const matches = findMatchingProducts(userMessage);
+        if (matches.length > 0) displayProducts(matches);
 
         // Add user message to session memory and previousContext
         sessionConversation.push({ sender: "user", text: userMessage });
