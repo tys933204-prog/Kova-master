@@ -50,7 +50,6 @@
       border-radius:5px;
       font-size:1.1rem;
     }
-    /* Chat bubbles */
     .message.user {
       background-color: #1a1a1a;
       color: white;
@@ -67,9 +66,10 @@
       align-self: flex-start;
       max-width: 80%;
     }
+
     /* Product Grid */
     #productGrid {
-      display:none;
+      display:block; /* <-- FIXED */
       margin: 20px auto;
       max-width: 400px;
       background: rgba(255,255,255,0.05);
@@ -78,7 +78,8 @@
       color: white;
       text-align: left;
     }
-    .product-item {
+
+    .product-item { /* matches JS now */
       display: flex;
       gap: 10px;
       margin-bottom: 15px;
@@ -121,10 +122,8 @@
       <button id="sendBtn">Send</button>
   </div>
 
-  <!-- Product grid section for Kova recommendations -->
-  <div id="productGrid">
-      <!-- Products recommended by Kova will appear here -->
-  </div>
+  <!-- Product grid -->
+  <div id="productGrid"></div>
 
 <script>
 if (!localStorage.getItem("kova_api")) {
