@@ -24,7 +24,6 @@ function findMatchingProducts(message) {
     return productCatalog.filter(item => item.style === match);
 }
 
-// Load history
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 let sessionConversation = [...chatHistory];
 
@@ -47,17 +46,17 @@ document.addEventListener("DOMContentLoaded", () => {
         el.classList.add("message", sender);
         el.textContent = text;
         chatBox.appendChild(el);
+
         chatHistory.push({ sender, text });
         sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
+
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Display product grid
     function displayProducts(products) {
         const grid = document.getElementById("productGrid");
         grid.innerHTML = "";
-
         products.forEach(item => {
             const card = document.createElement("div");
             card.classList.add("product-item");
@@ -70,15 +69,15 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
             grid.appendChild(card);
         });
-
-        // Make grid visible
         grid.style.display = "block";
     }
 
-    // OpenAI Request
     async function sendToOpenAI(messagesArray) {
         const apiMessages = [
-            { role: "system", content: "You are Kova, an AI fashion assistant. Your tone is confident, stylish, slightly playful, and feminine. Keep responses clear and conversational." },
+            { 
+                role: "system", 
+                content: "You are Kova, an AI fashion stylist. DO NOT start responses with words like: 'Absolutely', 'Got it', 'Sure', 'Okay', 'Love that', 'Of course'. Jump straight into the styling, outfit breakdown, or recommendation." 
+            },
             ...messagesArray.map(m => ({
                 role: m.sender === "user" ? "user" : "assistant",
                 content: m.text
@@ -98,29 +97,31 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await response.json();
-        return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
+
+        // clean filler intros if AI still tries
+        let text = data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
+        text = text.replace(/^(Absolutely|Got it|Sure|Okay|Love that|Of course|Yep|Yes)[.!]?/i, "").trimStart();
+
+        return text;
     }
 
-    // Reply logic
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // Check for style keywords BEFORE AI message
         const matches = findMatchingProducts(userMessage);
-
         if (matches.length > 0) {
             displayProducts(matches);
-            addMessage("✨ Obsessed — these fit the vibe perfectly. Scroll down and browse.", "kova");
+            addMessage("✨ Love that energy — these pieces fit the vibe perfectly.", "kova");
         }
 
-        // User message saved
         sessionConversation.push({ sender: "user", text: userMessage });
 
-        // Generate response
         const reply = await sendToOpenAI(sessionConversation);
 
         loading.style.display = "none";
         addMessage(reply, "kova");
+
+        sessionConversation.push({ sender: "kova", text: reply });
     }
 
     sendBtn.addEventListener("click", () => {
