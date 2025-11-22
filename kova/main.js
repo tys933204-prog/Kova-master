@@ -76,7 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const apiMessages = [
             { 
                 role: "system", 
-                content: "You are Kova, an AI fashion stylist. DO NOT start responses with words like: 'Absolutely', 'Got it', 'Sure', 'Okay', 'Love that', 'Of course'. Jump straight into the styling, outfit breakdown, or recommendation." 
+                content: "You are Kova, an AI fashion stylist. DO NOT start responses with words like: 'Absolutely', 'Got it', 'Got you', 'Sure', 'Okay', 'Love that', 'Of course'. Jump straight into the styling, outfit breakdown, or recommendation." 
             },
             ...messagesArray.map(m => ({
                 role: m.sender === "user" ? "user" : "assistant",
@@ -100,7 +100,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // clean filler intros if AI still tries
         let text = data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
-        text = text.replace(/^(Absolutely|Got it|Sure|Okay|Love that|Of course|Yep|Yes)[.!]?/i, "").trimStart();
+        text = text.replace(/^(Absolutely|Got it|Got you|Sure|Okay|Love that|Of course|Yep|Yes)[.!]?\s*/i, "").trimStart();
 
         return text;
     }
