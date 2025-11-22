@@ -34,10 +34,11 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
     previousContext: []
 };
 
-// Track full session conversation
+// Track full conversation this session
 let sessionConversation = [...chatHistory];
 
 document.addEventListener("DOMContentLoaded", () => {
+    
     const startBtn = document.getElementById("startChat");
     const chatContainer = document.getElementById("chatContainer");
     const sendBtn = document.getElementById("sendBtn");
@@ -65,7 +66,6 @@ document.addEventListener("DOMContentLoaded", () => {
     function displayProducts(products) {
         const grid = document.getElementById("productGrid");
         if (!grid) return;
-
         grid.innerHTML = "";
 
         products.forEach(item => {
@@ -110,30 +110,24 @@ document.addEventListener("DOMContentLoaded", () => {
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // NEW: Detect and respond
+        // NEW: Detect style & react before long response
         const matches = findMatchingProducts(userMessage);
         if (matches.length > 0) {
             displayProducts(matches);
-            addMessage("✨ Love that pick — I pulled some pieces I think you'd vibe with.", "kova");
+            addMessage("✨ Love that energy — these pieces fit the vibe perfectly.", "kova");
         }
 
+        // Store user message
         sessionConversation.push({ sender: "user", text: userMessage });
         userPreferences.previousContext.push(userMessage);
 
+        // Send to OpenAI
         const reply = await sendToOpenAI(sessionConversation);
 
         loading.style.display = "none";
         addMessage(reply, "kova");
 
         sessionConversation.push({ sender: "kova", text: reply });
-        userPreferences.previousContext.push(reply);
-
-        const msgLower = userMessage.toLowerCase();
-        if (msgLower.includes("style:")) {
-            const style = msgLower.split("style:")[1].trim();
-            if (!userPreferences.favoriteStyles.includes(style)) userPreferences.favoriteStyles.push(style);
-        }
-
         localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
     }
 
