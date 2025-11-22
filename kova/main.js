@@ -18,12 +18,9 @@ const productCatalog = [
 // Detect style keywords and return matching products
 function findMatchingProducts(message) {
     const msg = message.toLowerCase();
-
     const styles = ["streetwear", "cozy", "y2k"];
     const matchedStyle = styles.find(style => msg.includes(style));
-
     if (!matchedStyle) return [];
-
     return productCatalog.filter(item => item.style === matchedStyle);
 }
 
@@ -40,7 +37,6 @@ let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
 // Track full session conversation
 let sessionConversation = [...chatHistory];
 
-// Wait for DOM
 document.addEventListener("DOMContentLoaded", () => {
     const startBtn = document.getElementById("startChat");
     const chatContainer = document.getElementById("chatContainer");
@@ -49,13 +45,11 @@ document.addEventListener("DOMContentLoaded", () => {
     const chatBox = document.getElementById("messages");
     const loading = document.getElementById("loading");
 
-    // Start chat button
     startBtn.addEventListener("click", () => {
         chatContainer.style.display = "block";
         startBtn.style.display = "none";
     });
 
-    // Add message function
     function addMessage(text, sender) {
         const message = document.createElement("div");
         message.classList.add("message", sender);
@@ -68,26 +62,26 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // ⭐ NEW FUNCTION — Display products in product grid
     function displayProducts(products) {
         const grid = document.getElementById("productGrid");
         if (!grid) return;
 
-        grid.innerHTML = ""; // clear old items
+        grid.innerHTML = "";
 
         products.forEach(item => {
             const card = document.createElement("div");
-            card.classList.add("product-card");
+            card.classList.add("product-item");
             card.innerHTML = `
                 <img src="${item.img}" alt="${item.name}">
-                <p>${item.name}</p>
-                <p>${item.price}</p>
+                <div class="product-info">
+                    <p>${item.name}</p>
+                    <p>${item.price}</p>
+                </div>
             `;
             grid.appendChild(card);
         });
     }
 
-    // OpenAI API call
     async function sendToOpenAI(messagesArray) {
         const apiMessages = [
             { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
@@ -113,52 +107,36 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
-    // Kova reply with silent memory
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // Check if user message includes a style and show matching products
+        // NEW: Detect and respond
         const matches = findMatchingProducts(userMessage);
-        if (matches.length > 0) displayProducts(matches);
+        if (matches.length > 0) {
+            displayProducts(matches);
+            addMessage("✨ Love that pick — I pulled some pieces I think you'd vibe with.", "kova");
+        }
 
-        // Add user message to session memory and previousContext
         sessionConversation.push({ sender: "user", text: userMessage });
         userPreferences.previousContext.push(userMessage);
 
-        // Call OpenAI with full conversation
         const reply = await sendToOpenAI(sessionConversation);
 
         loading.style.display = "none";
         addMessage(reply, "kova");
 
-        // Store Kova's reply in memory
         sessionConversation.push({ sender: "kova", text: reply });
         userPreferences.previousContext.push(reply);
 
-        // Update preferences silently if user mentions them
         const msgLower = userMessage.toLowerCase();
         if (msgLower.includes("style:")) {
             const style = msgLower.split("style:")[1].trim();
             if (!userPreferences.favoriteStyles.includes(style)) userPreferences.favoriteStyles.push(style);
         }
-        if (msgLower.includes("brand:")) {
-            const brand = msgLower.split("brand:")[1].trim();
-            if (!userPreferences.favoriteBrands.includes(brand)) userPreferences.favoriteBrands.push(brand);
-        }
-        if (msgLower.includes("color:")) {
-            const color = msgLower.split("color:")[1].trim();
-            if (!userPreferences.favoriteColors.includes(color)) userPreferences.favoriteColors.push(color);
-        }
-        if (msgLower.includes("budget:")) {
-            const budget = msgLower.split("budget:")[1].trim();
-            userPreferences.budget = budget;
-        }
 
-        // Save preferences silently
         localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
     }
 
-    // Send button
     sendBtn.addEventListener("click", () => {
         const message = inputField.value.trim();
         if (!message) return;
@@ -167,11 +145,9 @@ document.addEventListener("DOMContentLoaded", () => {
         kovaReply(message);
     });
 
-    // Enter key
     inputField.addEventListener("keypress", (event) => {
         if (event.key === "Enter") sendBtn.click();
     });
 
-    // Load saved chat history
     chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
 });
