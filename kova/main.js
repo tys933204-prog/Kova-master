@@ -5,7 +5,7 @@ if (!kovaApiKey) {
     if (key) localStorage.setItem("kova_api", key);
 }
 
-// Temporary product list (we will replace later with Shopify)
+// Product list (temporary before Shopify)
 const productCatalog = [
     { name: "Streetwear Oversized Hoodie", style: "streetwear", img: "https://via.placeholder.com/200", price: "$45" },
     { name: "Baggy Cargo Pants", style: "streetwear", img: "https://via.placeholder.com/200", price: "$60" },
@@ -15,30 +15,21 @@ const productCatalog = [
     { name: "Rhinestone Mini Skirt", style: "y2k", img: "https://via.placeholder.com/200", price: "$35" }
 ];
 
-// Detect style keywords and return matching products
+// Detect style keywords
 function findMatchingProducts(message) {
     const msg = message.toLowerCase();
     const styles = ["streetwear", "cozy", "y2k"];
-    const matchedStyle = styles.find(style => msg.includes(style));
-    if (!matchedStyle) return [];
-    return productCatalog.filter(item => item.style === matchedStyle);
+    const match = styles.find(s => msg.includes(s));
+    if (!match) return [];
+    return productCatalog.filter(item => item.style === match);
 }
 
-// Load chat history and preferences
+// Load history
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
-let userPreferences = JSON.parse(localStorage.getItem("kova_preferences")) || {
-    favoriteStyles: [],
-    favoriteBrands: [],
-    budget: "",
-    favoriteColors: [],
-    previousContext: []
-};
-
-// Track full conversation this session
 let sessionConversation = [...chatHistory];
 
 document.addEventListener("DOMContentLoaded", () => {
-    
+
     const startBtn = document.getElementById("startChat");
     const chatContainer = document.getElementById("chatContainer");
     const sendBtn = document.getElementById("sendBtn");
@@ -52,27 +43,26 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     function addMessage(text, sender) {
-        const message = document.createElement("div");
-        message.classList.add("message", sender);
-        message.textContent = text;
-        chatBox.appendChild(message);
-
+        const el = document.createElement("div");
+        el.classList.add("message", sender);
+        el.textContent = text;
+        chatBox.appendChild(el);
         chatHistory.push({ sender, text });
         sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
+    // Display product grid
     function displayProducts(products) {
         const grid = document.getElementById("productGrid");
-        if (!grid) return;
         grid.innerHTML = "";
 
         products.forEach(item => {
             const card = document.createElement("div");
             card.classList.add("product-item");
             card.innerHTML = `
-                <img src="${item.img}" alt="${item.name}">
+                <img src="${item.img}">
                 <div class="product-info">
                     <p>${item.name}</p>
                     <p>${item.price}</p>
@@ -80,11 +70,15 @@ document.addEventListener("DOMContentLoaded", () => {
             `;
             grid.appendChild(card);
         });
+
+        // Make grid visible
+        grid.style.display = "block";
     }
 
+    // OpenAI Request
     async function sendToOpenAI(messagesArray) {
         const apiMessages = [
-            { role: "system", content: "You are Kova, an AI fashion assistant. Speak with confidence, style, and warmth." },
+            { role: "system", content: "You are Kova, an AI fashion assistant. Your tone is confident, stylish, slightly playful, and feminine. Keep responses clear and conversational." },
             ...messagesArray.map(m => ({
                 role: m.sender === "user" ? "user" : "assistant",
                 content: m.text
@@ -107,36 +101,34 @@ document.addEventListener("DOMContentLoaded", () => {
         return data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
     }
 
+    // Reply logic
     async function kovaReply(userMessage) {
         loading.style.display = "block";
 
-        // NEW: Detect style & react before long response
+        // Check for style keywords BEFORE AI message
         const matches = findMatchingProducts(userMessage);
+
         if (matches.length > 0) {
             displayProducts(matches);
-            addMessage("✨ Love that energy — these pieces fit the vibe perfectly.", "kova");
+            addMessage("✨ Obsessed — these fit the vibe perfectly. Scroll down and browse.", "kova");
         }
 
-        // Store user message
+        // User message saved
         sessionConversation.push({ sender: "user", text: userMessage });
-        userPreferences.previousContext.push(userMessage);
 
-        // Send to OpenAI
+        // Generate response
         const reply = await sendToOpenAI(sessionConversation);
 
         loading.style.display = "none";
         addMessage(reply, "kova");
-
-        sessionConversation.push({ sender: "kova", text: reply });
-        localStorage.setItem("kova_preferences", JSON.stringify(userPreferences));
     }
 
     sendBtn.addEventListener("click", () => {
-        const message = inputField.value.trim();
-        if (!message) return;
-        addMessage(message, "user");
+        const msg = inputField.value.trim();
+        if (!msg) return;
+        addMessage(msg, "user");
         inputField.value = "";
-        kovaReply(message);
+        kovaReply(msg);
     });
 
     inputField.addEventListener("keypress", (event) => {
