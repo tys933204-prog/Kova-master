@@ -1,9 +1,15 @@
-// Load API key
+// Load API keys from local storage
 const kovaApiKey = localStorage.getItem("kova_api");
 const shopifyToken = localStorage.getItem("shopify_token");
 
-// Temporary fallback products before Shopify sync
-const productCatalog = [
+// If no OpenAI key, prompt user
+if (!kovaApiKey) {
+    const key = prompt("Enter your OpenAI API key to activate Kova:");
+    if (key) localStorage.setItem("kova_api", key);
+}
+
+// Fallback demo products
+const fallbackProducts = [
     { name: "Streetwear Oversized Hoodie", style: "streetwear", img: "https://via.placeholder.com/200", price: "$45" },
     { name: "Baggy Cargo Pants", style: "streetwear", img: "https://via.placeholder.com/200", price: "$60" },
     { name: "Cozy Knit Sweater", style: "cozy", img: "https://via.placeholder.com/200", price: "$50" },
@@ -14,33 +20,36 @@ const productCatalog = [
 
 let shopifyProducts = [];
 
-// Fetch real products from store
+// ---- FETCH REAL SHOPIFY PRODUCTS ----
 async function loadShopifyProducts() {
     try {
-        const response = await fetch("/products.json", {
+        const res = await fetch("/products.json", {
             headers: { "X-Shopify-Storefront-Access-Token": shopifyToken }
         });
 
-        const data = await response.json();
+        const data = await res.json();
 
-        shopifyProducts = data.products.map(p => ({
+        shopifyProducts = data.products.map((p) => ({
             name: p.title,
             price: p.variants?.[0]?.price || "$?",
-            img: p.images?.[0]?.src || "",
+            img: p.image?.src || p.images?.[0]?.src || "",
+            url: `/products/${p.handle}`,
             style: "general"
         }));
 
         console.log("Shopify products loaded:", shopifyProducts);
+
     } catch (err) {
-        console.warn("Shopify product fetch failed, using fallback.");
+        console.warn("Shopify fetch failed — using fallback products.");
     }
 }
 
-// Hybrid product logic
+// Return real products if available, else fallback
 function getAvailableProducts() {
-    return shopifyProducts.length > 0 ? shopifyProducts : productCatalog;
+    return shopifyProducts.length > 0 ? shopifyProducts : fallbackProducts;
 }
 
+// Detect fashion style keywords
 function findMatchingProducts(message) {
     const msg = message.toLowerCase();
     const styles = ["streetwear", "cozy", "y2k"];
@@ -49,6 +58,7 @@ function findMatchingProducts(message) {
     return getAvailableProducts().filter(item => item.style === match);
 }
 
+// Load saved chat history
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 let sessionConversation = [...chatHistory];
 
@@ -57,36 +67,41 @@ document.addEventListener("DOMContentLoaded", () => {
     loadShopifyProducts();
 
     const startBtn = document.getElementById("startChat");
-    const chatContainer = document.getElementById("chatContainer");
     const sendBtn = document.getElementById("sendBtn");
     const inputField = document.getElementById("userInput");
-    const chatBox = document.getElementById("messages");
+    const messagesDiv = document.getElementById("messages");
     const loading = document.getElementById("loading");
+    const chatContainer = document.getElementById("chatContainer");
 
+    // START BUTTON
     startBtn.addEventListener("click", () => {
         chatContainer.style.display = "block";
         startBtn.style.display = "none";
     });
 
+    // Add chat bubble
     function addMessage(text, sender) {
         const el = document.createElement("div");
         el.classList.add("message", sender);
         el.textContent = text;
-        chatBox.appendChild(el);
+        messagesDiv.appendChild(el);
 
         chatHistory.push({ sender, text });
         sessionConversation.push({ sender, text });
         sessionStorage.setItem("kova_chat", JSON.stringify(chatHistory));
 
-        chatBox.scrollTop = chatBox.scrollHeight;
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
     }
 
+    // Display product cards
     function displayProducts(products) {
         const grid = document.getElementById("productGrid");
         grid.innerHTML = "";
-        products.forEach(item => {
+
+        products.forEach((item) => {
             const card = document.createElement("div");
             card.classList.add("product-item");
+
             card.innerHTML = `
                 <img src="${item.img}">
                 <div class="product-info">
@@ -94,14 +109,17 @@ document.addEventListener("DOMContentLoaded", () => {
                     <p>${item.price}</p>
                 </div>
             `;
+
             grid.appendChild(card);
         });
+
         grid.style.display = "block";
     }
 
+    // Send chat query to OpenAI API
     async function sendToOpenAI(messagesArray) {
         const apiMessages = [
-            { role: "system", content: "You are Kova, an AI fashion stylist. Be direct." },
+            { role: "system", content: "You are Kova, an AI fashion stylist. Respond with confidence and direct styling advice." },
             ...messagesArray.map(m => ({
                 role: m.sender === "user" ? "user" : "assistant",
                 content: m.text
@@ -114,7 +132,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${localStorage.getItem("kova_api")}`
             },
-            body: JSON.stringify({ model: "gpt-4.1-mini", messages: apiMessages })
+            body: JSON.stringify({
+                model: "gpt-4.1-mini",
+                messages: apiMessages
+            })
         });
 
         const data = await response.json();
@@ -127,10 +148,11 @@ document.addEventListener("DOMContentLoaded", () => {
         const matches = findMatchingProducts(userMessage);
         if (matches.length > 0) {
             displayProducts(matches);
-            addMessage("🔥 These match exactly what you're asking for.", "kova");
+            addMessage("🔥 These pieces match your vibe.", "kova");
         }
 
         sessionConversation.push({ sender: "user", text: userMessage });
+
         const reply = await sendToOpenAI(sessionConversation);
 
         loading.style.display = "none";
@@ -139,6 +161,7 @@ document.addEventListener("DOMContentLoaded", () => {
         sessionConversation.push({ sender: "kova", text: reply });
     }
 
+    // Send button
     sendBtn.addEventListener("click", () => {
         const msg = inputField.value.trim();
         if (!msg) return;
@@ -147,9 +170,11 @@ document.addEventListener("DOMContentLoaded", () => {
         kovaReply(msg);
     });
 
+    // Enter key
     inputField.addEventListener("keypress", (event) => {
         if (event.key === "Enter") sendBtn.click();
     });
 
+    // Restore previous messages
     chatHistory.forEach(msg => addMessage(msg.text, msg.sender));
 });
