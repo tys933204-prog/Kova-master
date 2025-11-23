@@ -1,9 +1,6 @@
 // Load API key
 const kovaApiKey = localStorage.getItem("kova_api");
-if (!kovaApiKey) {
-    const key = prompt("Enter your OpenAI API key to activate Kova:");
-    if (key) localStorage.setItem("kova_api", key);
-}
+const shopifyToken = localStorage.getItem("shopify_token");
 
 // Temporary fallback products before Shopify sync
 const productCatalog = [
@@ -15,29 +12,49 @@ const productCatalog = [
     { name: "Rhinestone Mini Skirt", style: "y2k", img: "https://via.placeholder.com/200", price: "$35" }
 ];
 
-// Shopify product storage (will populate later)
 let shopifyProducts = [];
+
+// Fetch real products from store
+async function loadShopifyProducts() {
+    try {
+        const response = await fetch("/products.json", {
+            headers: { "X-Shopify-Storefront-Access-Token": shopifyToken }
+        });
+
+        const data = await response.json();
+
+        shopifyProducts = data.products.map(p => ({
+            name: p.title,
+            price: p.variants?.[0]?.price || "$?",
+            img: p.images?.[0]?.src || "",
+            style: "general"
+        }));
+
+        console.log("Shopify products loaded:", shopifyProducts);
+    } catch (err) {
+        console.warn("Shopify product fetch failed, using fallback.");
+    }
+}
 
 // Hybrid product logic
 function getAvailableProducts() {
     return shopifyProducts.length > 0 ? shopifyProducts : productCatalog;
 }
 
-// Detect style keywords
 function findMatchingProducts(message) {
     const msg = message.toLowerCase();
     const styles = ["streetwear", "cozy", "y2k"];
     const match = styles.find(s => msg.includes(s));
     if (!match) return [];
-
-    const finalProducts = getAvailableProducts();
-    return finalProducts.filter(item => item.style === match);
+    return getAvailableProducts().filter(item => item.style === match);
 }
 
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
 let sessionConversation = [...chatHistory];
 
 document.addEventListener("DOMContentLoaded", () => {
+
+    loadShopifyProducts();
 
     const startBtn = document.getElementById("startChat");
     const chatContainer = document.getElementById("chatContainer");
@@ -84,10 +101,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     async function sendToOpenAI(messagesArray) {
         const apiMessages = [
-            { 
-                role: "system", 
-                content: "You are Kova, an AI fashion stylist. DO NOT start responses with filler like: 'Absolutely', 'Got it', 'Sure', 'Okay', 'Love that'. Begin directly with styling advice."
-            },
+            { role: "system", content: "You are Kova, an AI fashion stylist. Be direct." },
             ...messagesArray.map(m => ({
                 role: m.sender === "user" ? "user" : "assistant",
                 content: m.text
@@ -100,17 +114,11 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${localStorage.getItem("kova_api")}`
             },
-            body: JSON.stringify({
-                model: "gpt-4.1-mini",
-                messages: apiMessages
-            })
+            body: JSON.stringify({ model: "gpt-4.1-mini", messages: apiMessages })
         });
 
         const data = await response.json();
-        let text = data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
-        text = text.replace(/^(Absolutely|Got it|Got you|Sure|Okay|Love that|Of course|Yep|Yes)[.!]?\s*/i, "").trimStart();
-
-        return text;
+        return data.choices?.[0]?.message?.content || "⚠️ Error.";
     }
 
     async function kovaReply(userMessage) {
@@ -119,11 +127,10 @@ document.addEventListener("DOMContentLoaded", () => {
         const matches = findMatchingProducts(userMessage);
         if (matches.length > 0) {
             displayProducts(matches);
-            addMessage("✨ Love that energy — these fit the vibe.", "kova");
+            addMessage("🔥 These match exactly what you're asking for.", "kova");
         }
 
         sessionConversation.push({ sender: "user", text: userMessage });
-
         const reply = await sendToOpenAI(sessionConversation);
 
         loading.style.display = "none";
