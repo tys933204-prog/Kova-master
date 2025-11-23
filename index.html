@@ -1,140 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+
+  <!-- 👇 Fixes mobile scaling in Shopify iframe -->
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <title>Kova — AI Fashion Assistant</title>
+
+  <!-- External stylesheet -->
   <link rel="stylesheet" href="kova/style.css">
-  <style>
-    body {
-      background-color: #0f0f0f;
-      color: white;
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin-top: 5%;
-    }
-    #chatContainer {
-      display:none;
-      width: 100%;
-      max-width: 400px;
-      margin: 20px auto;
-      background: rgba(255,255,255,0.1);
-      padding: 20px;
-      border-radius: 10px;
-    }
-    #messages {
-      min-height:150px;
-      text-align:left;
-      font-size:1rem;
-      color:white;
-      margin-bottom:15px;
-      overflow-y:auto;
-      max-height:200px;
-      display:flex;
-      flex-direction: column;
-      gap:5px;
-    }
-    input {
-      width:100%;
-      padding:10px;
-      border:none;
-      border-radius:5px;
-      font-size:1rem;
-      outline:none;
-    }
-    button {
-      width:100%;
-      margin-top:10px;
-      padding:10px;
-      background:#ffffff;
-      border:none;
-      cursor:pointer;
-      border-radius:5px;
-      font-size:1.1rem;
-    }
-    .message.user {
-      background-color: #1a1a1a;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 15px 15px 0 15px;
-      align-self: flex-end;
-      max-width: 80%;
-    }
-    .message.kova {
-      background-color: #2e86de;
-      color: white;
-      padding: 10px 15px;
-      border-radius: 15px 15px 15px 0;
-      align-self: flex-start;
-      max-width: 80%;
-    }
-
-    /* Product Grid */
-    #productGrid {
-      display:block; /* <-- FIXED */
-      margin: 20px auto;
-      max-width: 400px;
-      background: rgba(255,255,255,0.05);
-      padding: 15px;
-      border-radius: 10px;
-      color: white;
-      text-align: left;
-    }
-
-    .product-item { /* matches JS now */
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-      align-items: center;
-      background: rgba(255,255,255,0.1);
-      padding: 10px;
-      border-radius: 8px;
-    }
-    .product-item img {
-      width: 60px;
-      height: 60px;
-      object-fit: cover;
-      border-radius: 5px;
-    }
-    .product-info {
-      flex: 1;
-    }
-    .product-info p {
-      margin: 2px 0;
-    }
-    .product-item button {
-      width: auto;
-      padding: 5px 10px;
-      font-size: 0.9rem;
-      border-radius: 5px;
-    }
-  </style>
 </head>
 <body>
 
-  <h1>🖤 Kova is loading...</h1>
+  <!-- Header -->
+  <h1 id="kovaTitle">🖤 Kova is loading...</h1>
 
-  <button id="startChat">Start Chat</button>
-  <p>Your AI fashion assistant is being built.</p>
+  <!-- Start Button -->
+  <button id="startChat" class="kova-btn">Start Chat</button>
+  <p id="subtitle">Your AI fashion assistant is being built.</p>
 
+  <!-- Chat Container -->
   <div id="chatContainer">
       <div id="messages">👋 Hey — I’m Kova. Tell me what style, brand, or vibe you want.</div>
-      <div id="loading" style="display:none; color: #ccc; font-style: italic; margin-bottom: 5px;">Kova is typing...</div>
-      <input id="userInput" type="text" placeholder="Type your message...">
-      <button id="sendBtn">Send</button>
+
+      <div id="loading">Kova is typing...</div>
+
+      <input id="userInput" type="text" placeholder="Type your message..." />
+      <button id="sendBtn" class="kova-btn-send">Send</button>
   </div>
 
-  <!-- Product grid -->
+  <!-- Product Results -->
   <div id="productGrid"></div>
 
-<script>
-if (!localStorage.getItem("kova_api")) {
-    const key = prompt("Enter your OpenAI API key to activate Kova:");
-    if (key) {
-        localStorage.setItem("kova_api", key);
-        alert("Key saved! Refresh the page.");
-    }
-}
-</script>
+  <!-- API Key Setup -->
+  <script>
+      if (!localStorage.getItem("kova_api")) {
+          const key = prompt("Enter your OpenAI API key to activate Kova:");
+          if (key) {
+              localStorage.setItem("kova_api", key);
+              alert("Key saved! Refresh the page.");
+          }
+      }
+  </script>
 
-<script src="kova/main.js"></script>
+  <!-- Main Logic -->
+  <script src="kova/main.js"></script>
+
 </body>
 </html>
