@@ -5,7 +5,7 @@ if (!kovaApiKey) {
     if (key) localStorage.setItem("kova_api", key);
 }
 
-// Temporary fallback products before Shopify sync (KEEP THESE)
+// Temporary fallback products before Shopify sync
 const productCatalog = [
     { name: "Streetwear Oversized Hoodie", style: "streetwear", img: "https://via.placeholder.com/200", price: "$45" },
     { name: "Baggy Cargo Pants", style: "streetwear", img: "https://via.placeholder.com/200", price: "$60" },
@@ -18,12 +18,12 @@ const productCatalog = [
 // Shopify product storage (will populate later)
 let shopifyProducts = [];
 
-// 🔥 HYBRID PRODUCT FUNCTION (shopify first, fallback to fake data)
+// Hybrid product logic
 function getAvailableProducts() {
     return shopifyProducts.length > 0 ? shopifyProducts : productCatalog;
 }
 
-// Detect style keywords (uses hybrid catalog)
+// Detect style keywords
 function findMatchingProducts(message) {
     const msg = message.toLowerCase();
     const styles = ["streetwear", "cozy", "y2k"];
@@ -86,7 +86,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const apiMessages = [
             { 
                 role: "system", 
-                content: "You are Kova, an AI fashion stylist. DO NOT start responses with words like: 'Absolutely', 'Got it', 'Got you', 'Sure', 'Okay', 'Love that', 'Of course'. Jump straight into the styling, outfit breakdown, or recommendation." 
+                content: "You are Kova, an AI fashion stylist. DO NOT start responses with filler like: 'Absolutely', 'Got it', 'Sure', 'Okay', 'Love that'. Begin directly with styling advice."
             },
             ...messagesArray.map(m => ({
                 role: m.sender === "user" ? "user" : "assistant",
@@ -107,7 +107,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         const data = await response.json();
-
         let text = data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
         text = text.replace(/^(Absolutely|Got it|Got you|Sure|Okay|Love that|Of course|Yep|Yes)[.!]?\s*/i, "").trimStart();
 
@@ -120,7 +119,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const matches = findMatchingProducts(userMessage);
         if (matches.length > 0) {
             displayProducts(matches);
-            addMessage("✨ Love that energy — these pieces fit the vibe perfectly.", "kova");
+            addMessage("✨ Love that energy — these fit the vibe.", "kova");
         }
 
         sessionConversation.push({ sender: "user", text: userMessage });
