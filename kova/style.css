@@ -1,5 +1,4 @@
-/* ===== GENERAL LAYOUT ===== */
-
+/* ===== GLOBAL ===== */
 body {
     margin: 0;
     padding: 0;
@@ -15,21 +14,19 @@ body {
 /* Header */
 #kovaTitle {
     font-size: 1.8rem;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
     font-weight: bold;
     margin-bottom: 10px;
     text-transform: uppercase;
-    color: #00FF00;
+    color: white;
 }
 
 #subtitle {
-    opacity: 0.6;
+    opacity: 0.5;
     margin-bottom: 25px;
 }
 
-
 /* ===== BUTTONS ===== */
-
 .kova-btn,
 .kova-btn-send {
     width: 100%;
@@ -48,23 +45,22 @@ body {
 
 .kova-btn:hover,
 .kova-btn-send:hover {
-    background-color: #0aff0a;
+    background-color: #19ff19;
 }
 
-
-/* ===== CHAT AREA ===== */
-
+/* ===== CHAT CONTAINER ===== */
 #chatContainer {
     width: 100%;
-    max-width: 500px;
+    max-width: 550px;
     background-color: #0d0d0d;
-    border: 2px solid #00FF00;
+    border: 1px solid #222;
     padding: 18px;
     border-radius: 10px;
     display: none;
     margin-top: 20px;
 }
 
+/* Chat messages area */
 #messages {
     padding: 12px;
     background: #111;
@@ -75,12 +71,12 @@ body {
     display: flex;
     flex-direction: column;
     gap: 6px;
-    border: 1px solid #00FF00;
+    border: 1px solid #222;
 }
 
 /* Chat bubbles */
 .message.user {
-    background-color: #1a1a1a;
+    background-color: #1b1b1b;
     color: white;
     padding: 10px 15px;
     border-radius: 12px 12px 0 12px;
@@ -89,60 +85,63 @@ body {
 }
 
 .message.kova {
-    background-color: #00FF00;
-    color: black;
+    background-color: #1a1a1a;
+    color: white;
     padding: 10px 15px;
     border-radius: 12px 12px 12px 0;
     max-width: 80%;
     align-self: flex-start;
+    border-left: 3px solid #00ff00; /* subtle identity marker */
 }
 
 /* Loading text */
 #loading {
     display: none;
     font-size: 0.9rem;
-    color: #aaa;
+    color: #00ff00;
     margin-bottom: 8px;
     font-style: italic;
 }
 
-
 /* ===== INPUT ===== */
-
 #userInput {
     width: 100%;
     padding: 12px;
     background-color: #111;
-    border: 2px solid #00FF00;
+    border: 1px solid #333;
     color: white;
     border-radius: 6px;
     font-size: 1rem;
     margin-top: 10px;
 }
 
-
-/* ===== PRODUCT RESULTS ===== */
-
+/* ===== PRODUCT RESULT AREA ===== */
 #productGrid {
     width: 100%;
-    max-width: 500px;
+    max-width: 550px;
     margin-top: 25px;
     display: none;
     background: #0d0d0d;
-    border: 2px solid #00FF00;
+    border: 1px solid #222;
     border-radius: 10px;
     padding: 15px;
 }
 
+/* Product cards */
 .product-item {
     display: flex;
     gap: 10px;
     align-items: center;
     background: #111;
-    border: 1px solid #00FF00;
+    border: 1px solid #333;
     padding: 10px;
     border-radius: 6px;
     margin-bottom: 12px;
+    transition: 0.2s;
+}
+
+.product-item:hover {
+    border-color: #00ff00;
 }
 
 .product-item img {
