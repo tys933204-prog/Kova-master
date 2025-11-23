@@ -5,7 +5,7 @@ if (!kovaApiKey) {
     if (key) localStorage.setItem("kova_api", key);
 }
 
-// Product list (temporary before Shopify)
+// Temporary fallback products before Shopify sync (KEEP THESE)
 const productCatalog = [
     { name: "Streetwear Oversized Hoodie", style: "streetwear", img: "https://via.placeholder.com/200", price: "$45" },
     { name: "Baggy Cargo Pants", style: "streetwear", img: "https://via.placeholder.com/200", price: "$60" },
@@ -15,13 +15,23 @@ const productCatalog = [
     { name: "Rhinestone Mini Skirt", style: "y2k", img: "https://via.placeholder.com/200", price: "$35" }
 ];
 
-// Detect style keywords
+// Shopify product storage (will populate later)
+let shopifyProducts = [];
+
+// 🔥 HYBRID PRODUCT FUNCTION (shopify first, fallback to fake data)
+function getAvailableProducts() {
+    return shopifyProducts.length > 0 ? shopifyProducts : productCatalog;
+}
+
+// Detect style keywords (uses hybrid catalog)
 function findMatchingProducts(message) {
     const msg = message.toLowerCase();
     const styles = ["streetwear", "cozy", "y2k"];
     const match = styles.find(s => msg.includes(s));
     if (!match) return [];
-    return productCatalog.filter(item => item.style === match);
+
+    const finalProducts = getAvailableProducts();
+    return finalProducts.filter(item => item.style === match);
 }
 
 let chatHistory = JSON.parse(sessionStorage.getItem("kova_chat")) || [];
@@ -98,7 +108,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const data = await response.json();
 
-        // clean filler intros if AI still tries
         let text = data.choices?.[0]?.message?.content || "⚠️ Something went wrong.";
         text = text.replace(/^(Absolutely|Got it|Got you|Sure|Okay|Love that|Of course|Yep|Yes)[.!]?\s*/i, "").trimStart();
 
